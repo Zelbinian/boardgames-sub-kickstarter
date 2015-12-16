@@ -1,5 +1,6 @@
 require(rvest)
 require(data.table)
+require(magrittr)
 
 # -------- functions -------------------------
 processProjectInfo <- function(projects) {
@@ -21,8 +22,11 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        startDates <- c(startDates, as.Date(dates[1],format="%B %dth"))
-        endDates <- c(endDates, as.Date(dates[2],format="%B %dth (%Y)"))
+        # the dates are really weird, lots of processing to required to turn them into date classes
+        startDates <- c(startDates, 
+                        strptime(gsub('st|nd|rd|th', '', dates[1]),format="%B %d"))
+        endDates <- c(endDates, 
+                      strptime(gsub('st|nd|rd|th', '', dates[2]),format="%B %dth (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
