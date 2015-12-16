@@ -1,5 +1,4 @@
 require(rvest)
-require(data.table)
 require(magrittr)
 
 # -------- functions -------------------------
@@ -49,7 +48,7 @@ prj_details <- ktrq_ending %>%                      #data source
 
 prj_info <- processProjectInfo(prj_details)
 
-ending_data <- data.table("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
+ending_data <- data.frame("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
                           "Description"=ktrq_ending %>% html_node("div") %>% html_text(),
                           "Backers"=prj_info$backers,
                           "Funding Status"=prj_info$funding,
