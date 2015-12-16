@@ -1,5 +1,6 @@
 require(rvest)
 require(magrittr)
+require(lubridate)
 
 # -------- functions -------------------------
 processProjectInfo <- function(projects) {
@@ -21,11 +22,9 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        # their date formats are weird so needs lots of processing to do right
-        startDates <- c(startDates, 
-                        as.Date(gsub('st|nd|rd|th','',dates[1]),format="%B %d"))
-        endDates <- c(endDates, 
-                      as.Date(gsub('st|nd|rd|th','',dates[2]),format="%B %d (%Y)"))
+        # using lubridate to make the date stuff less onerous
+        startDates <- c(startDates, parse_date_time(dates[1], "Bd"))
+        endDates <- c(endDates, mdy(dates[2]),format="%B %d (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
