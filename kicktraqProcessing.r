@@ -23,11 +23,15 @@ processProjectInfo <- function(projects) {
         funding <- c(funding, splitData[[2]][2])
         # their date formats are weird so needs lots of processing to do right
         startDates <- c(startDates, 
-                        as.Date(gsub('st|nd|rd|th','',date[1]),format="%B %d"))
+                        as.Date(gsub('st|nd|rd|th','',dates[1]),format="%B %d"))
         endDates <- c(endDates, 
-                      as.Date(gsub('st|nd|rd|th','',date[2]),format="%B %d (%Y)"))
+                      as.Date(gsub('st|nd|rd|th','',dates[2]),format="%B %d (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
+    
+    # have to class the date vectors or else they're just... weird
+    class(startDates) <- "Date"
+    class(endDates) <- "Date"
     
     return(list("backers"=backers, "funding"=funding, "startDates"=startDates, 
                 "endDates"=endDates, "remaining"=remaining))
