@@ -21,12 +21,13 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        startDates <- c(startDates, dates[1])
-        endDates <- c(endDates, dates[2])
+        startDates <- c(startDates, as.Date(dates[1],format="%B %dth"))
+        endDates <- c(endDates, as.Date(dates[2],format="%B %dth (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
-    return(list("backers"=backers, "funding"=funding, "startDates"=startDates, "endDates"=endDates, "remaining"=remaining))
+    return(list("backers"=backers, "funding"=funding, "startDates"=startDates, 
+                "endDates"=endDates, "remaining"=remaining))
 }
 
 ktrq_ending_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=end"
@@ -43,3 +44,11 @@ prj_details <- ktrq_ending %>%                      #data source
                 strsplit('\n')                      #storing each peice of data separately
 
 prj_info <- processProjectInfo(prj_details)
+
+ending_data <- data.table("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
+                          "Description"=ktrq_ending %>% html_node("div") %>% html_text(),
+                          "Backers"=prj_info$backers,
+                          "Funding Status"=prj_info$funding,
+                          "Project Start"=prj_info$startDates,
+                          "Project End"=prj_info$endDates,
+                          "Time Remaining"=prj_info$remaining)
