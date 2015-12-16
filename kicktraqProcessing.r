@@ -36,23 +36,36 @@ processProjectInfo <- function(projects) {
                 "endDates"=endDates, "remaining"=remaining))
 }
 
+# -------- setup variables -------------------------
+
+# these are the base urls for the two data frames we need to make
 ktrq_ending_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=end"
 ktrq_new_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=new"
+
+# we're scraping from paginated data, so we these variables will help traverse that
 ktrq_page_mod <- "&page="
 cur_page <- 1
 
-ktrq_ending <- read_html(ktrq_ending_url) %>% html_nodes(".project-infobox")
+# again, due to the pagination, we have to build the data frame a bit at a time
+# starting with a blank one allows for adding data the same time every time
+ending_data <- data.frame("Title"=character(),"Description"=character(),
+                          "Backers"=numeric(),"Funding Status"=character(),
+                          "Project Start"=numeric(),"Project End"=numeric(),
+                          "Time Remaining"=character())
+
+# -------- processing ending projects --------------
+ktrq_ending_data <- read_html(ktrq_ending_url) %>% html_nodes(".project-infobox")
 
 # The project details, annoyingly, are just a text blob
-prj_details <- ktrq_ending %>%                      #data source
+prj_details <- ktrq_ending_data %>%                      #data source
                 html_node(".project-details") %>%   #selects the div with the project details in it
                 html_text() %>%                     #pulling the text out
                 strsplit('\n')                      #storing each peice of data separately
 
 prj_info <- processProjectInfo(prj_details)
 
-ending_data <- data.frame("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
-                          "Description"=ktrq_ending %>% html_node("div") %>% html_text(),
+ending_data <- data.frame("Title"=ktrq_ending_data %>% html_node("a") %>% html_text(),
+                          "Description"=ktrq_ending_data %>% html_node("div") %>% html_text(),
                           "Backers"=prj_info$backers,
                           "Funding Status"=prj_info$funding,
                           "Project Start"=prj_info$startDates,
