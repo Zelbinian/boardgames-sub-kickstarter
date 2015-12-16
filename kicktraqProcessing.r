@@ -1,5 +1,5 @@
 require(rvest)
-require(data.table)
+require(magrittr)
 
 # -------- functions -------------------------
 processProjectInfo <- function(projects) {
@@ -21,8 +21,11 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        startDates <- c(startDates, as.Date(dates[1],format="%B %dth"))
-        endDates <- c(endDates, as.Date(dates[2],format="%B %dth (%Y)"))
+        # their date formats are weird so needs lots of processing to do right
+        startDates <- c(startDates, 
+                        as.Date(gsub('st|nd|rd|th','',date[1]),format="%B %d"))
+        endDates <- c(endDates, 
+                      as.Date(gsub('st|nd|rd|th','',date[2]),format="%B %d (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
@@ -45,7 +48,7 @@ prj_details <- ktrq_ending %>%                      #data source
 
 prj_info <- processProjectInfo(prj_details)
 
-ending_data <- data.table("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
+ending_data <- data.frame("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
                           "Description"=ktrq_ending %>% html_node("div") %>% html_text(),
                           "Backers"=prj_info$backers,
                           "Funding Status"=prj_info$funding,
