@@ -25,7 +25,7 @@ processProjectInfo <- function(projects) {
         startDates <- c(startDates, 
                         strptime(gsub('st|nd|rd|th', '', dates[1]),format="%B %d"))
         endDates <- c(endDates, 
-                      strptime(gsub('st|nd|rd|th', '', dates[2]),format="%B %dth (%Y)"))
+                      strptime(gsub('st|nd|rd|th', '', dates[2]),format="%B %d (%Y)"))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
