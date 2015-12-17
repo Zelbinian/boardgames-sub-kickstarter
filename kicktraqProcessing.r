@@ -24,7 +24,7 @@ processProjectInfo <- function(projects) {
         funding <- c(funding, splitData[[2]][2])
         # using lubridate to make the date stuff less onerous
         startDates <- c(startDates, parse_date_time(dates[1], "Bd"))
-        endDates <- c(endDates, mdy(dates[2]),format="%B %d (%Y)"))
+        endDates <- c(endDates, mdy(dates[2]))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
@@ -39,6 +39,10 @@ processProjectInfo <- function(projects) {
 # -------- setup variables -------------------------
 
 # these are the base urls for the two data frames we need to make
+ktrq_ending_base_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=end"
+ktrq_new_base_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=new"
+
+# these are the urls we'll be using for scraping and will be updated each time
 ktrq_ending_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=end"
 ktrq_new_url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort=new"
 
@@ -54,20 +58,34 @@ ending_data <- data.frame("Title"=character(),"Description"=character(),
                           "Time Remaining"=character())
 
 # -------- processing ending projects --------------
-ktrq_ending_data <- read_html(ktrq_ending_url) %>% html_nodes(".project-infobox")
-
-# The project details, annoyingly, are just a text blob
-prj_details <- ktrq_ending_data %>%                      #data source
-                html_node(".project-details") %>%   #selects the div with the project details in it
-                html_text() %>%                     #pulling the text out
-                strsplit('\n')                      #storing each peice of data separately
-
-prj_info <- processProjectInfo(prj_details)
-
-ending_data <- data.frame("Title"=ktrq_ending_data %>% html_node("a") %>% html_text(),
-                          "Description"=ktrq_ending_data %>% html_node("div") %>% html_text(),
-                          "Backers"=prj_info$backers,
-                          "Funding Status"=prj_info$funding,
-                          "Project Start"=prj_info$startDates,
-                          "Project End"=prj_info$endDates,
-                          "Time Remaining"=prj_info$remaining)
+repeat{
+    ktrq_ending_data <- read_html(ktrq_ending_url) %>% html_nodes(".project-infobox")
+    
+    # The project details, annoyingly, are just a text blob
+    prj_details <- ktrq_ending_data %>%                      #data source
+                    html_node(".project-details") %>%   #selects the div with the project details in it
+                    html_text() %>%                     #pulling the text out
+                    strsplit('\n')                      #storing each peice of data separately
+    
+    prj_info <- processProjectInfo(prj_details)
+    
+    ending_data <- rbind(ending_data, 
+                         data.frame("Title"=ktrq_ending_data %>% html_node("a") %>% html_text(),
+                                    "Description"=ktrq_ending_data %>% html_node("div") %>% html_text(),
+                                    "Backers"=prj_info$backers,
+                                    "Funding Status"=prj_info$funding,
+                                    "Project Start"=prj_info$startDates,
+                                    "Project End"=prj_info$endDates,
+                                    "Time Remaining"=prj_info$remaining))
+    
+    # we only need 7 days worth of data, so if we've got that we're done
+    #if (max(ending_data$Project.End) > today() + days(7)) {
+        break;
+   # } else {
+        # assemble new url for scraping
+   #     cur_page <- cur_page + 1
+    #    ktrq_ending_url <- paste0(ktrq_ending_base_url, ktrq_page_mod, cur_page)
+    #    # throw in some wait time so we don't bludgeon their server
+    #    Sys.sleep(5)
+    #}
+}
