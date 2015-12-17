@@ -7,8 +7,8 @@ processProjectInfo <- function(projects) {
     
     backers <- vector()
     funding <- vector()
-    startDates <- vector()
-    endDates <- vector()
+    startDates <- as.POSIXct(vector()) # yeah, I know
+    endDates <- as.POSIXct(vector())   # yeah, I know
     remaining <- vector()
     
     for (prj in projects) {
@@ -23,14 +23,11 @@ processProjectInfo <- function(projects) {
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
         # using lubridate to make the date stuff less onerous
-        startDates <- c(startDates, parse_date_time(dates[1], "Bd"))
-        endDates <- c(endDates, mdy(dates[2]))
+        # with_tz is some hacky bullshit to make c() not confuse timezones
+        startDates <- with_tz(c(startDates, parse_date_time(dates[1], "Bd")), "UTC")
+        endDates <- with_tz(c(endDates, mdy(dates[2])), "UTC")
         remaining <- c(remaining, splitData[[5]][2])
     }
-    
-    # have to class the date vectors or else they're just... weird
-    class(startDates) <- "Date"
-    class(endDates) <- "Date"
     
     return(list("backers"=backers, "funding"=funding, "startDates"=startDates, 
                 "endDates"=endDates, "remaining"=remaining))
