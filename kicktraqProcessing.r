@@ -67,7 +67,7 @@ scrape <- function(url) {
                                 "Time Remaining"=prj_info$remaining))
         
         # we only need 7 days worth of data, so if we've got that we're done
-        if (max(webdata$Project.End) > today() + days(7)) {
+        if (max(output$Project.End) > today() + days(7)) {
             break;
         } else {
             # assemble new url for scraping
@@ -78,7 +78,7 @@ scrape <- function(url) {
         }
     }
     
-    return(output)
+    return(output[output$Project.End <= (today() + days(7)),])
 }
 
 # wrapping the script with a function because that seems right
