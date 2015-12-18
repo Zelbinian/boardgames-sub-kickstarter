@@ -76,13 +76,13 @@ repeat{
                                     "Time Remaining"=prj_info$remaining))
     
     # we only need 7 days worth of data, so if we've got that we're done
-    #if (max(ending_data$Project.End) > today() + days(7)) {
+    if (max(as.Date(ending_data$Project.End)) >= today() + days(7)) {
         break;
-   # } else {
+    } else {
         # assemble new url for scraping
-   #     cur_page <- cur_page + 1
-    #    ktrq_ending_url <- paste0(ktrq_ending_base_url, ktrq_page_mod, cur_page)
-    #    # throw in some wait time so we don't bludgeon their server
-    #    Sys.sleep(5)
-    #}
+        cur_page <- cur_page + 1
+        ktrq_ending_url <- paste0(ktrq_ending_base_url, ktrq_page_mod, cur_page)
+        # throw in some wait time so we don't bludgeon their server
+        Sys.sleep(5)
+    }
 }
