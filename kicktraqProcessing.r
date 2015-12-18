@@ -74,7 +74,7 @@ scrape <- function(url) {
             page <- page + 1
             currentUrl <- paste0(url, pageMod, page)
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(5)
+            Sys.sleep(1)
         }
     }
     
