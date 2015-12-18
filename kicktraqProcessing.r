@@ -7,8 +7,8 @@ processProjectInfo <- function(projects) {
     
     backers <- vector()
     funding <- vector()
-    startDates <- as.POSIXct(vector()) # yeah, I know
-    endDates <- as.POSIXct(vector())   # yeah, I know
+    startDates <- as.Date(vector()) # yeah, I know
+    endDates <- as.Date(vector())   # yeah, I know
     remaining <- vector()
     
     for (prj in projects) {
@@ -23,9 +23,10 @@ processProjectInfo <- function(projects) {
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
         # using lubridate to make the date stuff less onerous
-        # with_tz is some hacky bullshit to make c() not confuse timezones
-        startDates <- with_tz(c(startDates, parse_date_time(dates[1], "Bd")), "UTC")
-        endDates <- with_tz(c(endDates, mdy(dates[2])), "UTC")
+        # but we need just a regular Date class because otherwise the timezone
+        # stuff gets really weird, and we don't know the timezone so we shouldn't store it
+        startDates <- c(startDates, as.Date(parse_date_time(dates[1], "Bd")))
+        endDates <- c(endDates, as.Date(mdy(dates[2])))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
@@ -76,7 +77,7 @@ repeat{
                                     "Time Remaining"=prj_info$remaining))
     
     # we only need 7 days worth of data, so if we've got that we're done
-    if (max(as.Date(ending_data$Project.End)) >= today() + days(7)) {
+    if (max(ending_data$Project.End) > today() + days(7)) {
         break;
     } else {
         # assemble new url for scraping
