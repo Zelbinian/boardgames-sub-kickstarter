@@ -25,19 +25,11 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-<<<<<<< HEAD
-        # the dates are really weird, lots of processing to required to turn them into date classes
-        startDates <- c(startDates, 
-                        strptime(gsub('st|nd|rd|th', '', dates[1]),format="%B %d"))
-        endDates <- c(endDates, 
-                      strptime(gsub('st|nd|rd|th', '', dates[2]),format="%B %d (%Y)"))
-=======
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
         startDates <- c(startDates, as.Date(parse_date_time(dates[1], "Bd")))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
->>>>>>> origin/master
         remaining <- c(remaining, splitData[[5]][2])
     }
     
@@ -99,16 +91,6 @@ repeat{
     }
 }
 
-<<<<<<< HEAD
-ending_data <- data.frame("Title"=ktrq_ending %>% html_node("a") %>% html_text(),
-                          "Description"=ktrq_ending %>% html_node("div") %>% html_text(),
-                          "Backers"=prj_info$backers,
-                          "Funding Status"=prj_info$funding,
-                          "Project Start"=prj_info$startDates,
-                          "Project End"=prj_info$endDates,
-                          "Time Remaining"=prj_info$remaining)
-=======
 # we looked for more than 7 days above in order to make sure we caught stuff on the 
 # next page. here, we prune out any extra we might have gotten
 ending_data <- ending_data[ending_data$Project.End <= (today() + days(7)),]
->>>>>>> origin/master
