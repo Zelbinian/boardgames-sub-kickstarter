@@ -87,3 +87,7 @@ repeat{
         Sys.sleep(5)
     }
 }
+
+# we looked for more than 7 days above in order to make sure we caught stuff on the 
+# next page. here, we prune out any extra we might have gotten
+ending_data <- ending_data[ending_data$Project.End <= (today() + days(7)),]
