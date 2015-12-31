@@ -97,3 +97,13 @@ scrapeKicktraq <- function(type) {
 # -------- processing boardgame kickstarter projects --------------
 #kicktraqEnding <- scrapeKicktraq("end")
 #kicktraqNew <- scrapeKicktraq("new")
+
+cat("Game|Status|Project Ends|Extra\n:--|:--|:--|:--", file = "kspost.md", append = TRUE)
+for(i in 1:nrow(kicktraqEnd)) {
+    with(kicktraqEnd[i,],
+        cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
+         Funding.Status,"|",
+         "project","|","extra  \n",sep = "",
+         file = "kspost.md", append = TRUE)
+    )
+}
