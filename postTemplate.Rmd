@@ -1,4 +1,28 @@
 ---
-title: "Untitled"
+title: "Kickstarter Roundup for "
 output: md_document
 ---
+
+```{r load script,echo=FALSE,warning=FALSE,results='hide'}
+## plug this in later, probably some of it you'll want to cache?
+```
+
+# Ending This Week 
+
+*Jump to [New this Week](#new-this-week)*
+
+Game|Status|Project Ends|Funding|Extra  
+:--|:--|:--|:--|:==  
+```{r ending this week, echo=FALSE, results='asis'}
+kicktraqEnd <- read.csv("sampledata.csv")
+for(i in 1:nrow(kicktraqEnd)) {
+    with(kicktraqEnd[i,],
+         cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
+             "status|project|funding|extra  \n",sep = "")
+    )
+}
+```
+
+# New This Week
+
+*Jump to [Ending This Week](#ending-this-week)*
