@@ -7,7 +7,8 @@ processProjectInfo <- function(projects) {
     
     backers <- vector()
     funding <- vector()
-    avgPledges <- vector()
+    avgPledge <- vector()
+    startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
     remaining <- vector()
     
@@ -22,29 +23,30 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        avgPledges <- c(avgPledges, splitData[[3]][2])
+        avgPledge <- c(avgPledge, splitData[[3]][2])
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
+        startDates <- c(startDates, as.Date(parse_date_time(dates[1], "Bd")))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
         remaining <- c(remaining, splitData[[5]][2])
     }
     
-    return(list("backers"=backers, "funding"=funding, "startDates"=startDates, 
-                "endDates"=endDates, "remaining"=remaining))
+    return(list("backers"=backers, "funding"=funding, "avgPledge"=avgPledge, 
+                "startDates"=startDates, "endDates"=endDates, "remaining"=remaining))
 }
 
-scrape <- function(url) {
+scrape <- function(url, type) {
     # we're scraping from paginated data, so we these variables will help traverse that
-    currentUrl <- url
+    currentUrl <- paste0(url,type)
     pageMod <- "&page="
     page <- 1
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"Description"=character(),
                          "Backers"=numeric(),"Funding Status"=character(),
-                         "Project Start"=numeric(),"Project End"=numeric(),
-                         "Time Remaining"=character())
+                         "Average Pledge"=character(),"Project Start"=numeric(),
+                         "Project End"=numeric(),"Time Remaining"=character())
     
     repeat{
         webdata <- read_html(currentUrl) %>% html_nodes(".project-infobox")
@@ -62,23 +64,30 @@ scrape <- function(url) {
                                 "Description"=webdata %>% html_node("div") %>% html_text(),
                                 "Backers"=prj_info$backers,
                                 "Funding Status"=prj_info$funding,
+                                "Average Pledge"=prj_info$avgPledge,
                                 "Project Start"=prj_info$startDates,
                                 "Project End"=prj_info$endDates,
                                 "Time Remaining"=prj_info$remaining))
         
         # we only need 7 days worth of data, so if we've got that we're done
-        if (max(output$Project.End) > today() + days(7)) {
+        if (type == "end" && max(output$Project.End) > today() + days(7)) {
+            break;
+        } else if (type == "new" && max(output$Project.Start) > today() + days(7)) {
             break;
         } else {
             # assemble new url for scraping
             page <- page + 1
-            currentUrl <- paste0(url, pageMod, page)
+            currentUrl <- paste0(url, type, pageMod, page)
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
+            Sys.sleep(5)
         }
     }
     
-    return(output[output$Project.End <= (today() + days(7)),])
+    if (type == "end") {
+        return(output[output$Project.End <= (today() + days(7)),])
+    } else {
+        return(output[output$Project.Start <= (today() + days(7)),])
+    }
 }
 
 # wrapping the script with a function because that seems right
@@ -91,21 +100,21 @@ scrapeKicktraq <- function(type) {
     type <- tolower(gsub(" ", "", type, fixed = TRUE))
     if (!(type %in% c("end","new"))) break;
     
-    return(scrape(paste0(url, type)))
+    return(scrape(url, type))
 }
 
 # -------- processing boardgame kickstarter projects --------------
 #kicktraqEnding <- scrapeKicktraq("end")
 #kicktraqNew <- scrapeKicktraq("new")
 
-cat("Game|Status|Project Ends|Extra\n:--|:--|:--|:--", file = "kspost.md", append = TRUE)
-for(i in 1:nrow(kicktraqEnd)) {
-    with(kicktraqEnd[i,],
-         # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
-         Funding.Status,"|",
-         Project.End,"|",
-         "extra  \n",sep = "",
-         file = "kspost.md", append = TRUE)
-    )
-}
+# cat("Game|Status|Project Ends|Extra\n:--|:--|:--|:--", file = "kspost.md", append = TRUE)
+# for(i in 1:nrow(kicktraqEnd)) {
+#     with(kicktraqEnd[i,],
+#          # to make it easy to read, each line below is a column in the table
+#          cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
+#          Funding.Status,"|",
+#          Project.End,"|",
+#          "extra  \n",sep = "",
+#          file = "kspost.md", append = TRUE)
+#     )
+# }
