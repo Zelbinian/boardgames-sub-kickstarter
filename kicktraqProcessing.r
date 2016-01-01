@@ -82,9 +82,9 @@ scrape <- function(url, type) {
                                 "Time Remaining"=prj_info$remaining))
         
         # we only need 7 days worth of data, so if we've got that we're done
-        if (type == "end" && max(output$Project.End) > today() + days(7)) {
+        if (type == "end" && max(output$Project.End) > today() + days(8)) {
             break;
-        } else if (type == "new" && min(output$Project.Start) < today() - days(7)) {
+        } else if (type == "new" && min(output$Project.Start) < today() - days(9)) {
             break;
         } else {
             # assemble new url for scraping
@@ -96,9 +96,9 @@ scrape <- function(url, type) {
     }
     
     if (type == "end") {
-        return(output[output$Project.End <= (today() + days(7)),])
+        return(output[output$Project.End <= (today() + days(8)),])
     } else {
-        return(output[output$Project.Start >= (today() - days(7)),])
+        return(output[output$Project.Start >= (today() - days(9)),])
     }
 }
 
