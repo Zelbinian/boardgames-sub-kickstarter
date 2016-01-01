@@ -15,7 +15,7 @@ parseStartDate <- function(asIsDate) {
 }
 
 
-processProjectInfo <- function(projects) {
+processProjectInfo <- function(projects, ktURLs) {
     
     backers <- vector()
     funding <- vector()
@@ -23,6 +23,7 @@ processProjectInfo <- function(projects) {
     startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
     remaining <- vector()
+    ksURLs <- vector()
     
     for (prj in projects) {
         prj <- prj[2:6]
@@ -44,7 +45,14 @@ processProjectInfo <- function(projects) {
         remaining <- c(remaining, splitData[[5]][2])
     }
     
-    return(list("backers"=backers, "funding"=funding, "avgPledge"=avgPledge, 
+    # this is based on the assumption that the urls and the projects come in the same order...
+    for(url in ktURLs) {
+        ksURLs <- c(ksURLS, read_html(paste0("www.kicktraq.com",url)) %>% 
+            html_node("#button-backthis") %>% html_attr("href"))
+        Sys.sleep(1) # try not to hammer their server
+    }
+    
+    return(list("url"=ksURLs,"backers"=backers, "funding"=funding, "avgPledge"=avgPledge, 
                 "startDates"=startDates, "endDates"=endDates, "remaining"=remaining))
 }
 
@@ -55,7 +63,7 @@ scrape <- function(url, type) {
     page <- 1
     
     # data frame the function will return
-    output <- data.frame("Title"=character(),"Description"=character(),
+    output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
                          "Backers"=numeric(),"Funding Status"=character(),
                          "Average Pledge"=character(),"Project Start"=numeric(),
                          "Project End"=numeric(),"Time Remaining"=character())
@@ -69,10 +77,11 @@ scrape <- function(url, type) {
             html_text() %>%                     #pulling the text out
             strsplit('\n')                      #storing each peice of data separately
         
-        prj_info <- processProjectInfo(prj_details)
+        prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
         
         output <- rbind(output, 
                         data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
+                                   "URL"=prj_info$url,
                                 "Description"=webdata %>% html_node("div") %>% html_text(),
                                 "Backers"=prj_info$backers,
                                 "Funding Status"=prj_info$funding,
