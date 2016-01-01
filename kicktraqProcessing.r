@@ -47,7 +47,7 @@ processProjectInfo <- function(projects, ktURLs) {
     
     # this is based on the assumption that the urls and the projects come in the same order...
     for(url in ktURLs) {
-        ksURLs <- c(ksURLS, read_html(paste0("www.kicktraq.com",url)) %>% 
+        ksURLs <- c(ksURLs, read_html(paste0("http://www.kicktraq.com",url)) %>% 
             html_node("#button-backthis") %>% html_attr("href"))
         Sys.sleep(1) # try not to hammer their server
     }
