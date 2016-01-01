@@ -3,6 +3,18 @@ require(magrittr)
 require(lubridate)
 
 # -------- functions -------------------------
+parseStartDate <- function(asIsDate) {
+    startDate <- as.Date(parse_date_time(asIsDate, "Bd"))
+    curDate <- Sys.Date()
+    
+    if (month(startDate)==12 && month(curDate)==1) {
+        year(startDate) <- year(curDate) - 1
+    }
+    
+    return(startDate)
+}
+
+
 processProjectInfo <- function(projects) {
     
     backers <- vector()
@@ -27,7 +39,7 @@ processProjectInfo <- function(projects) {
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
-        startDates <- c(startDates, as.Date(parse_date_time(dates[1], "Bd")))
+        startDates <- c(startDates, parseStartDate(dates[1]))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
         remaining <- c(remaining, splitData[[5]][2])
     }
