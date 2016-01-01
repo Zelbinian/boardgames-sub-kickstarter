@@ -7,7 +7,7 @@ processProjectInfo <- function(projects) {
     
     backers <- vector()
     funding <- vector()
-    startDates <- as.Date(vector()) # yeah, I know
+    avgPledges <- vector()
     endDates <- as.Date(vector())   # yeah, I know
     remaining <- vector()
     
@@ -22,10 +22,10 @@ processProjectInfo <- function(projects) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
+        avgPledges <- c(avgPledges, splitData[[3]][2])
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
-        startDates <- c(startDates, as.Date(parse_date_time(dates[1], "Bd")))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
         remaining <- c(remaining, splitData[[5]][2])
     }
@@ -101,9 +101,11 @@ scrapeKicktraq <- function(type) {
 cat("Game|Status|Project Ends|Extra\n:--|:--|:--|:--", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnd)) {
     with(kicktraqEnd[i,],
-        cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
+         # to make it easy to read, each line below is a column in the table
+         cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
          Funding.Status,"|",
-         "project","|","extra  \n",sep = "",
+         Project.End,"|",
+         "extra  \n",sep = "",
          file = "kspost.md", append = TRUE)
     )
 }
