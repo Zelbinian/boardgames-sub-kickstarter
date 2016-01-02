@@ -153,7 +153,7 @@ for(i in 1:nrow(kicktraqEnding)) {
          as.numeric(Backers),"|",
          as.character(Average.Pledge),"|",
          as.character(strftime(Project.End, format = "%a %b %d")),"|",
-         "extra  \n",sep = "",
+         "  \n",sep = "",
          file = "kspost.md", append = TRUE)
     )
 }
@@ -167,7 +167,7 @@ for(i in 1:nrow(kicktraqNew)) {
              as.numeric(Backers),"|",
              as.character(Average.Pledge),"|",
              as.character(strftime(Project.End, format = "%a %b %d")),"|",
-             "extra  \n",sep = "",
+             "  \n",sep = "",
              file = "kspost.md", append = TRUE)
     )
 }
