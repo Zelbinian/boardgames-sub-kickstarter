@@ -36,7 +36,6 @@ processProjectInfo <- function(projects, ktURLs) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        avgPledge <- c(avgPledge, splitData[[3]][2])
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
@@ -46,9 +45,15 @@ processProjectInfo <- function(projects, ktURLs) {
     }
     
     # this is based on the assumption that the urls and the projects come in the same order...
+    # ... and they do!
     for(url in ktURLs) {
-        ksURLs <- c(ksURLs, read_html(paste0("http://www.kicktraq.com",url)) %>% 
+        
+        projectPage <- read_html(paste0("http://www.kicktraq.com",url))
+        
+        ksURLs <- c(ksURLs, projectPage %>% 
             html_node("#button-backthis") %>% html_attr("href"))
+        
+        
         Sys.sleep(1) # try not to hammer their server
     }
     
