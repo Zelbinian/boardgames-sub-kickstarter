@@ -50,9 +50,19 @@ processProjectInfo <- function(projects, ktURLs) {
         
         projectPage <- read_html(paste0("http://www.kicktraq.com",url))
         
-        ksURLs <- c(ksURLs, projectPage %>% 
-            html_node("#button-backthis") %>% html_attr("href"))
+        ksURLs <- c(ksURLs, projectPage %>% html_node("#button-backthis") %>% html_attr("href"))
         
+        projectPageInfo <- projectPage %>%  
+            html_node("#project-info-text") %>%   #selects the div with the project details in it
+            html_text() %>%                     #pulling the text out
+            strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
+            unlist(.)
+        
+        # the pledge is listed in the 9th line
+        # if we substring on the location of the colon + 2, that will reliably get the dollar value
+        avgPledge <- c(avgPledge, 
+                       projectPageInfo[9] %>% 
+                           substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
         
         Sys.sleep(1) # try not to hammer their server
     }
