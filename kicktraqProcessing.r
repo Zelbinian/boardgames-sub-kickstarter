@@ -171,3 +171,8 @@ for(i in 1:nrow(kicktraqNew)) {
              file = "kspost.md", append = TRUE)
     )
 }
+cat("*****", file = "kspost.md", append = TRUE)
+cat("Looking for more comprehensive Kickstarter gaming information? ",
+    "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist), ",
+    "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/), ", 
+    "Or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).")
