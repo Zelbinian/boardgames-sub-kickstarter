@@ -150,7 +150,7 @@ for(i in 1:nrow(kicktraqEnding)) {
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
          as.character(Funding.Status),"|",
-         as.numeric(Backers),"|",
+         as.character(Backers),"|",
          as.character(Average.Pledge),"|",
          as.character(strftime(Project.End, format = "%a %b %d")),"|",
          "  \n",sep = "",
@@ -164,7 +164,7 @@ for(i in 1:nrow(kicktraqNew)) {
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
              as.character(Funding.Status),"|",
-             as.numeric(Backers),"|",
+             as.character(Backers),"|",
              as.character(Average.Pledge),"|",
              as.character(strftime(Project.End, format = "%a %b %d")),"|",
              "  \n",sep = "",
