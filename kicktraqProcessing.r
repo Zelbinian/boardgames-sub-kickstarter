@@ -157,7 +157,7 @@ for(i in 1:nrow(kicktraqEnding)) {
          file = "kspost.md", append = TRUE)
     )
 }
-cat("## New This Week\n", file = "kspost.md", append = TRUE)
+cat("## New Last Week\n", file = "kspost.md", append = TRUE)
 cat("Game|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
