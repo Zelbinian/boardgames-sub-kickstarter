@@ -144,29 +144,29 @@ scrapeKicktraq <- function(type) {
 #kicktraqNew <- scrapeKicktraq("new")
 cat("# Kickstarter Roundup, Week of 1/3/16\n", file = "kspost.md", append = TRUE)
 cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
-cat("Game|Status|Backers|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Game|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnding)) {
     with(kicktraqEnding[i,],
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
          as.character(Funding.Status),"|",
          as.numeric(Backers),"|",
-         #as.character(Average.Pledge),"|",
-         as.character(strftime(Project.End, format = "%b %d")),"|",
+         as.character(Average.Pledge),"|",
+         as.character(strftime(Project.End, format = "%a %b %d")),"|",
          "extra  \n",sep = "",
          file = "kspost.md", append = TRUE)
     )
 }
 cat("## New This Week\n", file = "kspost.md", append = TRUE)
-cat("Game|Status|Backers|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Game|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
              as.character(Funding.Status),"|",
              as.numeric(Backers),"|",
-             #as.character(Average.Pledge),"|",
-             as.character(strftime(Project.End, format = "%b %d")),"|",
+             as.character(Average.Pledge),"|",
+             as.character(strftime(Project.End, format = "%a %b %d")),"|",
              "extra  \n",sep = "",
              file = "kspost.md", append = TRUE)
     )
