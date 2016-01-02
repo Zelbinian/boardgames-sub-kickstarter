@@ -127,15 +127,18 @@ scrapeKicktraq <- function(type) {
 # -------- processing boardgame kickstarter projects --------------
 #kicktraqEnding <- scrapeKicktraq("end")
 #kicktraqNew <- scrapeKicktraq("new")
-
-# cat("Game|Status|Project Ends|Extra\n:--|:--|:--|:--", file = "kspost.md", append = TRUE)
-# for(i in 1:nrow(kicktraqEnd)) {
-#     with(kicktraqEnd[i,],
-#          # to make it easy to read, each line below is a column in the table
-#          cat("**[",as.character(Title),"](http://blank)** ",as.character(Description),"|",
-#          Funding.Status,"|",
-#          Project.End,"|",
-#          "extra  \n",sep = "",
-#          file = "kspost.md", append = TRUE)
-#     )
-# }
+cat("# Kickstarter Roundup, Week of 1/3/16\n", file = "kspost.md", append = TRUE)
+cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
+cat("Game|Status|Backers|Average Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+for(i in 1:nrow(kicktraqEnding)) {
+    with(kicktraqEnding[i,],
+         # to make it easy to read, each line below is a column in the table
+         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
+         as.character(Funding.Status),"|",
+         as.numeric(Backers),"|",
+         as.character(Average.Pledge),"|",
+         as.Date(Project.End),"|",
+         "extra  \n",sep = "",
+         file = "kspost.md", append = TRUE)
+    )
+}
