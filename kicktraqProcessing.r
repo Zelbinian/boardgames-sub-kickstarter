@@ -170,8 +170,6 @@ for(i in 1:nrow(kicktraqNew)) {
              file = "kspost.md", append = TRUE)
     )
 }
-cat("## New Last Week\n", file = "kspost.md", append = TRUE)
-cat("Game|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 cat("*****", file = "kspost.md", append = TRUE)
 cat("Looking for more comprehensive Kickstarter gaming information? ",
     "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist), ",
