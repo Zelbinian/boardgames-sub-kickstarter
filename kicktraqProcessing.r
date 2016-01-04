@@ -156,7 +156,7 @@ for(i in 1:nrow(kicktraqEnding)) {
          as.character(Funding.Status),"|",
          as.character(Backers),"|",
          as.character(Average.Pledge),"|",
-         as.character(strftime(Project.End, format = "%a %b %d")),"|",
+         as.character(strftime(Project.End, format = "%m-%d")),"|",
          "  \n",sep = "",
          file = "kspost.md", append = TRUE)
     )
@@ -170,7 +170,7 @@ for(i in 1:nrow(kicktraqNew)) {
              as.character(Funding.Status),"|",
              as.character(Backers),"|",
              as.character(Average.Pledge),"|",
-             as.character(strftime(Project.End, format = "%a %b %d")),"|",
+             as.character(strftime(Project.End, format = "%m-%d")),"|",
              "  \n",sep = "",
              file = "kspost.md", append = TRUE)
     )
