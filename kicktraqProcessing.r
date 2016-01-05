@@ -158,7 +158,7 @@ cat("Project Info|% Funded|Backers|Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--
 for(i in 1:nrow(kicktraqEnding)) {
     with(kicktraqEnding[i,],
          # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",Funding.Amount,")*","|",
+         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
          as.character(Funding.Percent),"|",
          as.character(Backers),"|",
          as.character(Average.Pledge),"|",
@@ -173,7 +173,7 @@ kicktraqNew <- kicktraqNew[order(kicktraqNew),]
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
          # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",Funding.Amount,")*","|",
+         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
              as.character(Funding.Percent),"|",
              as.character(Backers),"|",
              as.character(Average.Pledge),"|",
