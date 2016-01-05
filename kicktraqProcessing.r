@@ -76,9 +76,12 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-scrape <- function(url, type) {
+scrapeKicktraq <- function(type) {
+    type <- tolower(gsub(" ", "", type, fixed = TRUE))
+    if (!(type %in% c("end","new"))) break;
+    
     # we're scraping from paginated data, so we these variables will help traverse that
-    currentUrl <- paste0(url,type)
+    currentUrl <- paste0("http://www.kicktraq.com/categories/games/tabletop%20games?sort=",type)
     pageMod <- "&page="
     page <- 1
     
@@ -130,19 +133,6 @@ scrape <- function(url, type) {
     } else {
         return(output[output$Project.Start >= (today() - days(9)),])
     }
-}
-
-# wrapping the script with a function because that seems right
-scrapeKicktraq <- function(type) {
-    
-    url = "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
-    
-    # yeah, this is shit, but i'm not publishing this, i'm just protecting
-    # against typos
-    type <- tolower(gsub(" ", "", type, fixed = TRUE))
-    if (!(type %in% c("end","new"))) break;
-    
-    return(scrape(url, type))
 }
 
 # -------- processing boardgame kickstarter projects --------------
