@@ -36,6 +36,8 @@ processProjectInfo <- function(projects, ktURLs) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
+        fundingAmt <- sub("\\(.*\\)", "", funding)
+        fundingPcnt <- sub("[^(]+\\(([^)]+)\\).*", "\\1", funding)
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
@@ -43,6 +45,8 @@ processProjectInfo <- function(projects, ktURLs) {
         endDates <- c(endDates, as.Date(mdy(dates[2])))
         remaining <- c(remaining, splitData[[5]][2])
     }
+    
+    
     
     # this is based on the assumption that the urls and the projects come in the same order...
     # ... and they do!
@@ -67,8 +71,9 @@ processProjectInfo <- function(projects, ktURLs) {
         Sys.sleep(1) # try not to hammer their server
     }
     
-    return(list("url"=ksURLs,"backers"=backers, "funding"=funding, "avgPledge"=avgPledge, 
-                "startDates"=startDates, "endDates"=endDates, "remaining"=remaining))
+    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPcnt,
+                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates,
+                "remaining"=remaining))
 }
 
 scrape <- function(url, type) {
@@ -79,7 +84,7 @@ scrape <- function(url, type) {
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
-                         "Backers"=numeric(),"Funding Status"=character(),
+                         "Backers"=numeric(),"Funding Amount"=character(), "Funding Percent"=character(),
                          "Average Pledge"=character(),"Project Start"=numeric(),
                          "Project End"=numeric(),"Time Remaining"=character())
     
@@ -99,7 +104,8 @@ scrape <- function(url, type) {
                                    "URL"=prj_info$url,
                                 "Description"=webdata %>% html_node("div") %>% html_text(),
                                 "Backers"=prj_info$backers,
-                                "Funding Status"=prj_info$funding,
+                                "Funding Amount"=prj_info$fundingAmt,
+                                "Funding Percent"=prj_info$fundingPcnt,
                                 "Average Pledge"=prj_info$avgPledge,
                                 "Project Start"=prj_info$startDates,
                                 "Project End"=prj_info$endDates,
