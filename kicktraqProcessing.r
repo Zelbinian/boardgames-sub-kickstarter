@@ -159,7 +159,7 @@ for(i in 1:nrow(kicktraqEnding)) {
     with(kicktraqEnding[i,],
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
-         as.character(Funding.Status),"|",
+         as.character(Funding.Amount),"**(",as.character(Funding.Percent),")**","|",
          as.character(Backers),"|",
          as.character(Average.Pledge),"|",
          as.character(strftime(Project.End, format = "%m-%d")),"|",
@@ -174,7 +174,7 @@ for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
          # to make it easy to read, each line below is a column in the table
          cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
-             as.character(Funding.Status),"|",
+             as.character(Funding.Amount),"**(",as.character(Funding.Percent),")**","|",
              as.character(Backers),"|",
              as.character(Average.Pledge),"|",
              as.character(strftime(Project.End, format = "%m-%d")),"|",
