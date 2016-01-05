@@ -36,8 +36,8 @@ processProjectInfo <- function(projects, ktURLs) {
         # we need to select the 2nd entry in each list
         backers <- c(backers, splitData[[1]][2])
         funding <- c(funding, splitData[[2]][2])
-        fundingAmt <- sub("\\(.*\\)", "", funding)
-        fundingPcnt <- sub("[^(]+\\(([^)]+)\\).*", "\\1", funding)
+        fundingAmt <- trimws(sub("\\(.*\\)", "", funding))
+        fundingPcnt <- trimws(sub("[^(]+\\(([^)]+)\\).*", "\\1", funding))
         # using lubridate to make the date stuff less onerous
         # but we need just a regular Date class because otherwise the timezone
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
@@ -154,12 +154,12 @@ cat("**What this is**: This is a curated listing of Kickstarter tabletop games p
 "projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
 "sometime between 12:00am and 12:00pm PST.\n*****", file = "kspost.md", append = TRUE)
 cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
-cat("Project|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Project Info|% Funded|Backers|Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnding)) {
     with(kicktraqEnding[i,],
          # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
-         as.character(Funding.Amount),"**(",as.character(Funding.Percent),")**","|",
+         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",Funding.Amount,")*","|",
+         as.character(Funding.Percent),"|",
          as.character(Backers),"|",
          as.character(Average.Pledge),"|",
          as.character(strftime(Project.End, format = "%m-%d")),"|",
@@ -168,13 +168,13 @@ for(i in 1:nrow(kicktraqEnding)) {
     )
 }
 cat("## New Last Week\n", file = "kspost.md", append = TRUE)
-cat("Project|Status|Backers|Avg Pledge|End Date|Info\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Project Info|% Funded|Backers|Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 kicktraqNew <- kicktraqNew[order(kicktraqNew),]
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
          # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description),"|",
-             as.character(Funding.Amount),"**(",as.character(Funding.Percent),")**","|",
+         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",Funding.Amount,")*","|",
+             as.character(Funding.Percent),"|",
              as.character(Backers),"|",
              as.character(Average.Pledge),"|",
              as.character(strftime(Project.End, format = "%m-%d")),"|",
