@@ -142,7 +142,7 @@ cat("**What this is**: This is a curated listing of Kickstarter tabletop games p
 "that are either: a) newly posted in the  past 7ish days or b) ending in the next 7ish days",
 "and have at least a fighting chance of being funded. By and large they will be board game",
 "projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
-"sometime between 12:00am and 12:00pm PST.\n*****", file = "kspost.md", append = TRUE)
+"sometime between 12:00am and 12:00pm PST.\n*****\n", file = "kspost.md", append = TRUE)
 cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
 cat("Project Info|Status|Backers|Avg Pledge|Ending Date|Xtra\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnding)) {
