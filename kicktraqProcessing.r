@@ -144,7 +144,7 @@ cat("**What this is**: This is a curated listing of Kickstarter tabletop games p
 "projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
 "sometime between 12:00am and 12:00pm PST.\n*****\n", file = "kspost.md", append = TRUE)
 cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ending Date|Xtra\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnding)) {
     with(kicktraqEnding[i,],
          # to make it easy to read, each line below is a column in the table
@@ -158,7 +158,7 @@ for(i in 1:nrow(kicktraqEnding)) {
     )
 }
 cat("## New Last Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ends|Xtra\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 kicktraqNew <- kicktraqNew[with(kicktraqNew, order(Title)),]
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
@@ -172,7 +172,7 @@ for(i in 1:nrow(kicktraqNew)) {
              file = "kspost.md", append = TRUE)
     )
 }
-cat("*****", file = "kspost.md", append = TRUE)
+cat("*****\n", file = "kspost.md", append = TRUE)
 cat("Looking for more comprehensive Kickstarter gaming information? ",
     "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
     "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
