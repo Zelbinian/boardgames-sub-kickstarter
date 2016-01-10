@@ -159,7 +159,7 @@ for(i in 1:nrow(kicktraqEnding)) {
 }
 cat("## New Last Week\n", file = "kspost.md", append = TRUE)
 cat("Project Info|Status|Backers|Avg Pledge|Ends|Xtra\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
-kicktraqNew <- kicktraqNew[order(kicktraqNew),]
+kicktraqNew <- kicktraqNew[with(kicktraqNew, order(Title)),]
 for(i in 1:nrow(kicktraqNew)) {
     with(kicktraqNew[i,],
          # to make it easy to read, each line below is a column in the table
