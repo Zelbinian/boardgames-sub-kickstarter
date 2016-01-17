@@ -81,7 +81,8 @@ scrapeKicktraq <- function(type) {
     if (!(type %in% c("end","new"))) break;
     
     # we're scraping from paginated data, so we these variables will help traverse that
-    currentUrl <- paste0("http://www.kicktraq.com/categories/games/tabletop%20games?sort=",type)
+    url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
+    currentUrl <- paste0(url,type)
     pageMod <- "&page="
     page <- 1
     
