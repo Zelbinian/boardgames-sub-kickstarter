@@ -112,7 +112,7 @@ createPostHeader <- function(outputFile) {
         "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
 }
 
-createPostBody <- function(section, outputFile) {
+createPostBody <- function(section, outputFile, data) {
     section <- tolower(section)
     acceptableSections <- c('n','o','new','old')
     if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
@@ -124,9 +124,21 @@ createPostBody <- function(section, outputFile) {
         cat("## Ending This Week\n", file = outputFile, append = TRUE)
     }
     
-    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+    # posts a formatted version of the passed in data to the output file 
+    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = outputFile, append = TRUE)
+    for(i in 1:nrow(data)) {
+        with(data[i,],
+             # to make it easy to read, each line below is a column in the table
+            cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
+                as.character(Funding.Percent),"|",
+                as.character(Backers),"|",
+                as.character(Average.Pledge),"|",
+                as.character(strftime(Project.End, format = "%m-%d")),"|",
+                "  \n",sep = "",
+                file = outputFile, append = TRUE)
+        )
+    }
     
-    # use the gathered data...
 }
     
 createPostFooter <- function(outputFile) {
@@ -226,34 +238,4 @@ createKsPost <- function(type="both", outputFile="kspost.md",
 }
 
 # -------- processing boardgame kickstarter projects --------------
-#kicktraqEnding <- scrapeKicktraq("end")
-#kicktraqNew <- scrapeKicktraq("new")
-cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
-for(i in 1:nrow(kicktraqEnding)) {
-    with(kicktraqEnding[i,],
-         # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
-         as.character(Funding.Percent),"|",
-         as.character(Backers),"|",
-         as.character(Average.Pledge),"|",
-         as.character(strftime(Project.End, format = "%m-%d")),"|",
-         "  \n",sep = "",
-         file = "kspost.md", append = TRUE)
-    )
-}
-cat("## New Last Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
-kicktraqNew <- kicktraqNew[with(kicktraqNew, order(Title)),]
-for(i in 1:nrow(kicktraqNew)) {
-    with(kicktraqNew[i,],
-         # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
-             as.character(Funding.Percent),"|",
-             as.character(Backers),"|",
-             as.character(Average.Pledge),"|",
-             as.character(strftime(Project.End, format = "%m-%d")),"|",
-             "  \n",sep = "",
-             file = "kspost.md", append = TRUE)
-    )
-}
+createKsPost()
