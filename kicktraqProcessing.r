@@ -82,15 +82,16 @@ processProjectInfo <- function(projects, ktURLs) {
 scrapeKicktraqPage <- function(url) {
     webdata <- read_html(url) %>% html_nodes(".project-infobox")
     
-    # The project details, annoyingly, are just a text blob
+    # The project details, annoyingly, are just a text blob, so need to parse them out
     prj_details <- webdata %>%                      #data source
         html_node(".project-details") %>%   #selects the div with the project details in it
         html_text() %>%                     #pulling the text out
         strsplit('\n')                      #storing each peice of data separately
     
+    # this is the meaty function, the thing that actually processes the scraped data
     prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
     
-    data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
+    return(data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
                "URL"=prj_info$url,
                "Description"=webdata %>% html_node("div") %>% html_text(),
                "Backers"=prj_info$backers,
@@ -99,7 +100,7 @@ scrapeKicktraqPage <- function(url) {
                "Average Pledge"=prj_info$avgPledge,
                "Project Start"=prj_info$startDates,
                "Project End"=prj_info$endDates,
-               "Time Remaining"=prj_info$remaining)
+               "Time Remaining"=prj_info$remaining))
 }
 
 
@@ -167,61 +168,58 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     if(!integerTest(endWindow)) stop("endWindow must be a non-negative integer")
     
     # we'll let read_html validate the url for us
-    # here, we're constructing the "currentUrl" used for scraping for the first time
-    # the data are paginated so we these variables will help us traverse the pages
     pageMod <- "&page="
-    page <- startPage
-    currentUrl <- paste0(baseUrl, type, pageMod, startPage)
     
     createPostHeader(outputFile)
     
-    # data frame the function will return
-    output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
+    # because we want to iteratively build a data frame, it's helpful to start with an
+    # empty shell version of it such that we can write one test that is guaranteed to
+    # fail the first time
+    endData <- newData <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
                          "Backers"=numeric(),"Funding Amount"=character(), "Funding Percent"=character(),
                          "Average Pledge"=character(),"Project Start"=numeric(),
                          "Project End"=numeric(),"Time Remaining"=character())
     
-    repeat{
-        webdata <- read_html(currentUrl) %>% html_nodes(".project-infobox")
+    # put together the 'ending this week' data and dumping it to a file
+    if (type %in% c('e','end','both')) {
+        page <- startPage
         
-        # The project details, annoyingly, are just a text blob
-        prj_details <- webdata %>%                      #data source
-            html_node(".project-details") %>%   #selects the div with the project details in it
-            html_text() %>%                     #pulling the text out
-            strsplit('\n')                      #storing each peice of data separately
-        
-        prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
-        
-        output <- rbind(output, 
-                        data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
-                                   "URL"=prj_info$url,
-                                "Description"=webdata %>% html_node("div") %>% html_text(),
-                                "Backers"=prj_info$backers,
-                                "Funding Amount"=prj_info$fundingAmt,
-                                "Funding Percent"=prj_info$fundingPcnt,
-                                "Average Pledge"=prj_info$avgPledge,
-                                "Project Start"=prj_info$startDates,
-                                "Project End"=prj_info$endDates,
-                                "Time Remaining"=prj_info$remaining))
-        
-        # we only need 7 days worth of data, so if we've got that we're done
-        if (type == "end" && max(output$Project.End) > today() + days(7)) {
-            break;
-        } else if (type == "new" && min(output$Project.Start) < today() - days(7)) {
-            break;
-        } else {
-            # assemble new url for scraping
+        # grab more data as long as we don't have enough!
+        while(max(output$Project.End) <= today() + days(endWindow)) {
+            currentUrl <- paste0(baseUrl, 'end', pageMod, page)
+            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
-            currentUrl <- paste0(url, type, pageMod, page)
+            
             # throw in some wait time so we don't bludgeon their server
             Sys.sleep(1)
         }
+        
+        # subset the data, because, ironically, now we'll have too much
+        endData <- endData[endData$Project.End <= (today() + days(endWindow)),]
+        
+        # now dump it to the file
+        createPostBody('end', endData)
     }
     
-    if (type == "end") {
-        return(output[output$Project.End <= (today() + days(7)),])
-    } else {
-        return(output[output$Project.Start >= (today() - days(7)),])
+    # put together the 'new this week' data and dumping it to a file
+    if (type %in% c('n','new','both')) {
+        page <- startPage
+        
+        # grab more data as long as we don't have enough!
+        while(max(output$Project.Start) >= today() - days(newWindow)) {
+            currentUrl <- paste0(baseUrl, type, pageMod, page)
+            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
+            page <- page + 1
+            
+            # throw in some wait time so we don't bludgeon their server
+            Sys.sleep(1)
+        }
+        
+        # subset the data, because, ironically, now we'll have too much
+        newData <- newData[newData$Project.Start >= (today() - days(newWindow)),]
+        
+        # now dump it to the file
+        createPostBody('new', newData)
     }
     
     createPostFooter(outputFile)
