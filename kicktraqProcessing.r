@@ -79,7 +79,7 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-scrapeKicktraq <- function(type = "both") {
+scrapeKicktraq <- function(type = "both", output.file = "kspost.md") {
     
     # argument validation
     # type
