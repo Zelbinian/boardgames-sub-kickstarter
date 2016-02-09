@@ -85,11 +85,23 @@ createPostHeader <- function(outputFile) {
         "and have at least a fighting chance of being funded. By and large they will be board game",
         "projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
         "sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
-    cat("## Ending This Week\n", file = outputFile, append = TRUE)
 }
 
-createPostBody <- function() {
+createPostBody <- function(section, outputFile) {
+    section <- tolower(section)
+    acceptableSections <- c('n','o','new','old')
+    if(!(section %in% acceptableSections)) stop(cat(section," is an invalid specifier."))
     
+    # write the appropriate section header
+    if(section %in% c('n','new')) {
+        cat("## New This Week\n", file = outputFile, append = TRUE)
+    } else {
+        cat("## Ending This Week\n", file = outputFile, append = TRUE)
+    }
+    
+    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
+    
+    # use the gathered data...
 }
     
 createPostFooter <- function(outputFile) {
@@ -122,8 +134,6 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     currentUrl <- paste0(baseUrl, type, pageMod, startPage)
     
     createPostHeader(outputFile)
-    #createPostBody()
-    createPostFooter(outputFile)
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
@@ -173,6 +183,8 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     } else {
         return(output[output$Project.Start >= (today() - days(7)),])
     }
+    
+    createPostFooter(outputFile)
 }
 
 # -------- processing boardgame kickstarter projects --------------
