@@ -97,6 +97,10 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     page <- startPage
     currentUrl <- paste0(baseUrl, type, pageMod, startPage)
     
+    # file
+    # check if file exists, if so delete it
+    if(file.exists("kspost.md")) file.remove("kspost.md")
+    
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
                          "Backers"=numeric(),"Funding Amount"=character(), "Funding Percent"=character(),
