@@ -79,11 +79,29 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-createPostHeader <- function()
+createPostHeader <- function(outputFile) {
+    cat("**What this is**: This is a curated listing of Kickstarter tabletop games projects",
+        "that are either: a) newly posted in the  past 7ish days or b) ending in the next 7ish days",
+        "and have at least a fighting chance of being funded. By and large they will be board game",
+        "projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
+        "sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
+    cat("## Ending This Week\n", file = outputFile, append = TRUE)
+}
 
-createPostBody <- function()
+createPostBody <- function() {
     
-createPostHeader <- function()
+}
+    
+createPostFooter <- function(outputFile) {
+    cat("*****\n", file = outputFile, append = TRUE)
+    cat("Looking for more comprehensive Kickstarter gaming information? ",
+        "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
+        "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
+        "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).",
+        file = outputFile, append = TRUE)
+    cat("*****\n", file = outputFile, append = TRUE)
+    cat("## Footnotes\n", file = outputFile, append = TRUE)
+}
 
 createKsPost <- function(type="both", outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
@@ -103,13 +121,9 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     page <- startPage
     currentUrl <- paste0(baseUrl, type, pageMod, startPage)
     
-    # file
-    # check if file exists, if so delete it
-    if(file.exists("kspost.md")) file.remove("kspost.md")
-    
-    #createPostHeader()
+    createPostHeader(outputFile)
     #createPostBody()
-    #createPostFooter()
+    createPostFooter(outputFile)
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
@@ -164,11 +178,6 @@ createKsPost <- function(type="both", outputFile="kspost.md",
 # -------- processing boardgame kickstarter projects --------------
 #kicktraqEnding <- scrapeKicktraq("end")
 #kicktraqNew <- scrapeKicktraq("new")
-cat("**What this is**: This is a curated listing of Kickstarter tabletop games projects",
-"that are either: a) newly posted in the  past 7ish days or b) ending in the next 7ish days",
-"and have at least a fighting chance of being funded. By and large they will be board game",
-"projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
-"sometime between 12:00am and 12:00pm PST.\n*****\n", file = "kspost.md", append = TRUE)
 cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
 cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
 for(i in 1:nrow(kicktraqEnding)) {
@@ -198,9 +207,3 @@ for(i in 1:nrow(kicktraqNew)) {
              file = "kspost.md", append = TRUE)
     )
 }
-cat("*****\n", file = "kspost.md", append = TRUE)
-cat("Looking for more comprehensive Kickstarter gaming information? ",
-    "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
-    "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
-    "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).",
-    file = "kspost.md", append = TRUE)
