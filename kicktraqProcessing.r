@@ -79,6 +79,12 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
+createPostHeader <- function()
+
+createPostBody <- function()
+    
+createPostHeader <- function()
+
 createKsPost <- function(type="both", outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
                            startPage=1) {
@@ -100,6 +106,10 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     # file
     # check if file exists, if so delete it
     if(file.exists("kspost.md")) file.remove("kspost.md")
+    
+    #createPostHeader()
+    #createPostBody()
+    #createPostFooter()
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
