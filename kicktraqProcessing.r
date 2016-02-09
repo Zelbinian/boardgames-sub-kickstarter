@@ -1,6 +1,9 @@
-require(rvest)
-require(magrittr)
-require(lubridate)
+# -------- setup procedures ------------------
+
+# checking for required packages, installing if necessary
+reqPackages <- c("rvest", "magrittr", "lubridate")
+newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
+if(length(newPackages)) install.packages(newPackages)
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
