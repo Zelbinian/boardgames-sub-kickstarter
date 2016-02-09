@@ -79,18 +79,23 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-scrapeKicktraq <- function(type = "both", output.file = "kspost.md") {
+createKsPost <- function(type="both", outputFile="kspost.md",
+                           baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
+                           startPage=1) {
     
     # argument validation
     # type
     type <- tolower(gsub(" ", "", type, fixed = TRUE))
     if (!(type %in% c("end","new", "both"))) stop("Type argument must be one of 'end', 'new', or 'both' (case insensitive).");
     
+    # startPage
+    if(class(startPage) != "numeric" && startPage%%1 != 0 && startPage < 0) stop("startPage must be a non-negative integer")
+    
+    # url 
     # we're scraping from paginated data, so we these variables will help traverse that
-    url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
-    currentUrl <- paste0(url,type)
     pageMod <- "&page="
-    page <- 1
+    page <- startPage
+    currentUrl <- paste0(baseUrl, type, pageMod, startPage)
     
     # data frame the function will return
     output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
