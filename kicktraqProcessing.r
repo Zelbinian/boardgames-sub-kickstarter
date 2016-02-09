@@ -112,10 +112,13 @@ createPostHeader <- function(outputFile) {
         "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
 }
 
-createPostBody <- function(section, outputFile, data) {
+createPostBody <- function(section, outputFile, data, sort = F) {
     section <- tolower(section)
     acceptableSections <- c('n','o','new','old')
     if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
+    
+    # sorting data, if required
+    if(sort) data <- data[with(data, order(Title)),]
     
     # write the appropriate section header
     if(section %in% c('n','new')) {
@@ -210,7 +213,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         endData <- endData[endData$Project.End <= (today() + days(endWindow)),]
         
         # now dump it to the file
-        createPostBody('end', endData)
+        createPostBody('end', outputFile, endData)
     }
     
     # put together the 'new this week' data and dumping it to a file
@@ -219,8 +222,8 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         
         # grab more data as long as we don't have enough!
         while(max(output$Project.Start) >= today() - days(newWindow)) {
-            currentUrl <- paste0(baseUrl, type, pageMod, page)
-            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
+            currentUrl <- paste0(baseUrl, 'new', pageMod, page)
+            newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
@@ -231,7 +234,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         newData <- newData[newData$Project.Start >= (today() - days(newWindow)),]
         
         # now dump it to the file
-        createPostBody('new', newData)
+        createPostBody('new', outputFile, newData, sort = T)
     }
     
     createPostFooter(outputFile)
