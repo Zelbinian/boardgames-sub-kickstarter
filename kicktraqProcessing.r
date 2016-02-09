@@ -127,8 +127,9 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     # startPage
     if(class(startPage) != "numeric" && startPage%%1 != 0 && startPage < 0) stop("startPage must be a non-negative integer")
     
-    # url 
-    # we're scraping from paginated data, so we these variables will help traverse that
+    # we'll let read_html validate the url for us
+    # here, we're constructing the "currentUrl" used for scraping for the first time
+    # the data are paginated so we these variables will help us traverse the pages
     pageMod <- "&page="
     page <- startPage
     currentUrl <- paste0(baseUrl, type, pageMod, startPage)
