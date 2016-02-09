@@ -79,6 +79,30 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
+scrapeKicktraqPage <- function(url) {
+    webdata <- read_html(url) %>% html_nodes(".project-infobox")
+    
+    # The project details, annoyingly, are just a text blob
+    prj_details <- webdata %>%                      #data source
+        html_node(".project-details") %>%   #selects the div with the project details in it
+        html_text() %>%                     #pulling the text out
+        strsplit('\n')                      #storing each peice of data separately
+    
+    prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
+    
+    data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
+               "URL"=prj_info$url,
+               "Description"=webdata %>% html_node("div") %>% html_text(),
+               "Backers"=prj_info$backers,
+               "Funding Amount"=prj_info$fundingAmt,
+               "Funding Percent"=prj_info$fundingPcnt,
+               "Average Pledge"=prj_info$avgPledge,
+               "Project Start"=prj_info$startDates,
+               "Project End"=prj_info$endDates,
+               "Time Remaining"=prj_info$remaining)
+}
+
+
 createPostHeader <- function(outputFile) {
     cat("**What this is**: This is a weekly, curated listing of Kickstarter tabletop games projects",
         "that are either: a) newly posted in the  past 7 days or b) ending in the next 7 days",
