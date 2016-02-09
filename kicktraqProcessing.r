@@ -79,9 +79,12 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-scrapeKicktraq <- function(type) {
+scrapeKicktraq <- function(type = "both") {
+    
+    # argument validation
+    # type
     type <- tolower(gsub(" ", "", type, fixed = TRUE))
-    if (!(type %in% c("end","new"))) break;
+    if (!(type %in% c("end","new", "both"))) stop("Type argument must be one of 'end', 'new', or 'both' (case insensitive).");
     
     # we're scraping from paginated data, so we these variables will help traverse that
     url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
