@@ -90,7 +90,7 @@ createPostHeader <- function(outputFile) {
 createPostBody <- function(section, outputFile) {
     section <- tolower(section)
     acceptableSections <- c('n','o','new','old')
-    if(!(section %in% acceptableSections)) stop(cat(section," is an invalid specifier."))
+    if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
     
     # write the appropriate section header
     if(section %in% c('n','new')) {
