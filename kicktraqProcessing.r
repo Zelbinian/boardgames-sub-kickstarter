@@ -115,9 +115,18 @@ createPostFooter <- function(outputFile) {
     cat("## Footnotes\n", file = outputFile, append = TRUE)
 }
 
+integerTest <- function(toTest){
+    
+    if(class(toTest) == "numeric" && toTest%%1 == 0 && toTest > -1) {
+        TRUE
+    } else {
+        FALSE
+    }
+}
+
 createKsPost <- function(type="both", outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
-                           startPage=1) {
+                           startPage=1, newWindow=7, endWindow=7) {
     
     # argument validation
     # type
@@ -125,7 +134,13 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     if (!(type %in% c("end","new", "both"))) stop("Type argument must be one of 'end', 'new', or 'both' (case insensitive).");
     
     # startPage
-    if(class(startPage) != "numeric" && startPage%%1 != 0 && startPage < 0) stop("startPage must be a non-negative integer")
+    if(!integerTest(startPage)) stop("startPage must be a non-negative integer")
+    
+    # newWindow
+    if(!integerTest(newWindow)) stop("newWindow must be a non-negative integer")
+    
+    # endWindow
+    if(!integerTest(endWindow)) stop("endWindow must be a non-negative integer")
     
     # we'll let read_html validate the url for us
     # here, we're constructing the "currentUrl" used for scraping for the first time
