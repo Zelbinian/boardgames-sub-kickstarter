@@ -120,7 +120,7 @@ createPostBody <- function(section, outputFile, data, sort = F) {
     if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
     
     # sorting data, if required
-    if(sort) data <- data[with(data, order(Title)),]
+    if(sort) data <- data[with(data, order(as.character(Title))),]
     
     # write the appropriate section header
     if(section %in% c('n','new')) {
