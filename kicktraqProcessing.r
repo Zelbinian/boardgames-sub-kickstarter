@@ -5,6 +5,10 @@ reqPackages <- c("rvest", "magrittr", "lubridate")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
+library(rvest)
+library(magrittr)
+library(lubridate)
+
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
     startDate <- as.Date(parse_date_time(asIsDate, "Bd"))
@@ -16,7 +20,6 @@ parseStartDate <- function(asIsDate) {
     
     return(startDate)
 }
-
 
 processProjectInfo <- function(projects, ktURLs) {
     
@@ -103,7 +106,6 @@ scrapeKicktraqPage <- function(url) {
                "Time Remaining"=prj_info$remaining))
 }
 
-
 createPostHeader <- function(outputFile) {
     cat("**What this is**: This is a weekly, curated listing of Kickstarter tabletop games projects",
         "that are either: a) newly posted in the  past 7 days or b) ending in the next 7 days",
@@ -114,7 +116,7 @@ createPostHeader <- function(outputFile) {
 
 createPostBody <- function(section, outputFile, data, sort = F) {
     section <- tolower(section)
-    acceptableSections <- c('n','o','new','old')
+    acceptableSections <- c('new','end')
     if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
     
     # sorting data, if required
@@ -190,9 +192,14 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     # because we want to iteratively build a data frame, it's helpful to start with an
     # empty shell version of it such that we can write one test that is guaranteed to
     # fail the first time
-    endData <- newData <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
-                         "Backers"=numeric(),"Funding Amount"=character(), "Funding Percent"=character(),
-                         "Average Pledge"=character(),"Project Start"=numeric(),
+    endData <- newData <- data.frame("Title"=character(),
+                                     "URL"=character(),
+                                     "Description"=character(),
+                                     "Backers"=numeric(),
+                                     "Funding Amount"=character(),
+                                     "Funding Percent"=character(),
+                                     "Average Pledge"=character(),
+                                     "Project Start"=numeric(),
                          "Project End"=numeric(),"Time Remaining"=character())
     
     # put together the 'ending this week' data and dumping it to a file
@@ -200,7 +207,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         page <- startPage
         
         # grab more data as long as we don't have enough!
-        while(max(output$Project.End) <= today() + days(endWindow)) {
+        while(nrow(endData) == 0 || max(endData$Project.End) <= today() + days(endWindow)) {
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
             endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
@@ -221,7 +228,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         page <- startPage
         
         # grab more data as long as we don't have enough!
-        while(max(output$Project.Start) >= today() - days(newWindow)) {
+        while(nrow(newData) == 0 || min(newData$Project.Start) >= today() - days(newWindow)) {
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
             newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
@@ -241,4 +248,4 @@ createKsPost <- function(type="both", outputFile="kspost.md",
 }
 
 # -------- processing boardgame kickstarter projects --------------
-createKsPost()
+#createKsPost()
