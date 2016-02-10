@@ -151,7 +151,7 @@ createPostFooter <- function(outputFile) {
     cat("Looking for more comprehensive Kickstarter gaming information? ",
         "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
         "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
-        "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).",
+        "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n",
         file = outputFile, append = TRUE)
     cat("*****\n", file = outputFile, append = TRUE)
     cat("## Footnotes\n", file = outputFile, append = TRUE)
