@@ -92,7 +92,8 @@ scrapeKicktraqPage <- function(url) {
         strsplit('\n')                      #storing each peice of data separately
     
     # this is the meaty function, the thing that actually processes the scraped data
-    prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
+    ktURLs <- webdata %>% html_node("a") %>% html_attr("href")
+    prj_info <- processProjectInfo(prj_details, ktURLs)
     
     return(data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
                "URL"=prj_info$url,
@@ -103,7 +104,8 @@ scrapeKicktraqPage <- function(url) {
                "Average Pledge"=prj_info$avgPledge,
                "Project Start"=prj_info$startDates,
                "Project End"=prj_info$endDates,
-               "Time Remaining"=prj_info$remaining))
+               "Time Remaining"=prj_info$remaining,
+               "Kicktraq URL"=ktURLs))
 }
 
 createPostHeader <- function(outputFile) {
@@ -123,7 +125,7 @@ createPostBody <- function(section, outputFile, data, sort = F) {
     if(sort) data <- data[with(data, order(as.character(Title))),]
     
     # write the appropriate section header
-    if(section %in% c('n','new')) {
+    if(section == 'new') {
         cat("## New This Week\n", file = outputFile, append = TRUE)
     } else {
         cat("## Ending This Week\n", file = outputFile, append = TRUE)
@@ -139,9 +141,15 @@ createPostBody <- function(section, outputFile, data, sort = F) {
                 as.character(Backers),"|",
                 as.character(Average.Pledge),"|",
                 as.character(strftime(Project.End, format = "%m-%d")),"|",
-                "  \n",sep = "",
-                file = outputFile, append = TRUE)
+                sep = "", file = outputFile, append = TRUE)
         )
+        
+        if (section == 'end') {
+            cat("[kicktraq](",data[i,]$Kicktraq.URL,")", 
+                sep = "", file = outputFile, append = TRUE)
+        }
+        
+        cat("\n", file = outputFile, append = TRUE)
     }
     
 }
@@ -200,7 +208,9 @@ createKsPost <- function(type="both", outputFile="kspost.md",
                                      "Funding Percent"=character(),
                                      "Average Pledge"=character(),
                                      "Project Start"=numeric(),
-                         "Project End"=numeric(),"Time Remaining"=character())
+                                     "Project End"=numeric(),
+                                     "Time Remaining"=character(),
+                                     "Kicktraq URL"=character())
     
     # put together the 'ending this week' data and dumping it to a file
     if (type %in% c('e','end','both')) {
