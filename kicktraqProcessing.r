@@ -176,7 +176,7 @@ integerTest <- function(toTest){
 
 createKsPost <- function(type="both", outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
-                           startPage=1, newWindow=7, endWindow=7) {
+                           startPage=1, newWindow=7, endWindow=7, saveData = T) {
     
     # argument validation
     # type
@@ -255,6 +255,8 @@ createKsPost <- function(type="both", outputFile="kspost.md",
     }
     
     createPostFooter(outputFile)
+    
+    return(list("end" = endData, "new" = newData))
 }
 
 # -------- processing boardgame kickstarter projects --------------
