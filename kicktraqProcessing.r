@@ -1,6 +1,13 @@
-require(rvest)
-require(magrittr)
-require(lubridate)
+# -------- setup procedures ------------------
+
+# checking for required packages, installing if necessary
+reqPackages <- c("rvest", "magrittr", "lubridate")
+newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
+if(length(newPackages)) install.packages(newPackages)
+
+library(rvest)
+library(magrittr)
+library(lubridate)
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
@@ -13,7 +20,6 @@ parseStartDate <- function(asIsDate) {
     
     return(startDate)
 }
-
 
 processProjectInfo <- function(projects, ktURLs) {
     
@@ -76,106 +82,182 @@ processProjectInfo <- function(projects, ktURLs) {
                 "remaining"=remaining))
 }
 
-scrapeKicktraq <- function(type) {
-    type <- tolower(gsub(" ", "", type, fixed = TRUE))
-    if (!(type %in% c("end","new"))) break;
+scrapeKicktraqPage <- function(url) {
+    webdata <- read_html(url) %>% html_nodes(".project-infobox")
     
-    # we're scraping from paginated data, so we these variables will help traverse that
-    url <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
-    currentUrl <- paste0(url,type)
-    pageMod <- "&page="
-    page <- 1
+    # The project details, annoyingly, are just a text blob, so need to parse them out
+    prj_details <- webdata %>%                      #data source
+        html_node(".project-details") %>%   #selects the div with the project details in it
+        html_text() %>%                     #pulling the text out
+        strsplit('\n')                      #storing each peice of data separately
     
-    # data frame the function will return
-    output <- data.frame("Title"=character(),"URL"=character(),"Description"=character(),
-                         "Backers"=numeric(),"Funding Amount"=character(), "Funding Percent"=character(),
-                         "Average Pledge"=character(),"Project Start"=numeric(),
-                         "Project End"=numeric(),"Time Remaining"=character())
+    # this is the meaty function, the thing that actually processes the scraped data
+    ktURLs <- webdata %>% html_node("a") %>% html_attr("href")
+    prj_info <- processProjectInfo(prj_details, ktURLs)
     
-    repeat{
-        webdata <- read_html(currentUrl) %>% html_nodes(".project-infobox")
-        
-        # The project details, annoyingly, are just a text blob
-        prj_details <- webdata %>%                      #data source
-            html_node(".project-details") %>%   #selects the div with the project details in it
-            html_text() %>%                     #pulling the text out
-            strsplit('\n')                      #storing each peice of data separately
-        
-        prj_info <- processProjectInfo(prj_details, webdata %>% html_node("a") %>% html_attr("href"))
-        
-        output <- rbind(output, 
-                        data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
-                                   "URL"=prj_info$url,
-                                "Description"=webdata %>% html_node("div") %>% html_text(),
-                                "Backers"=prj_info$backers,
-                                "Funding Amount"=prj_info$fundingAmt,
-                                "Funding Percent"=prj_info$fundingPcnt,
-                                "Average Pledge"=prj_info$avgPledge,
-                                "Project Start"=prj_info$startDates,
-                                "Project End"=prj_info$endDates,
-                                "Time Remaining"=prj_info$remaining))
-        
-        # we only need 7 days worth of data, so if we've got that we're done
-        if (type == "end" && max(output$Project.End) > today() + days(8)) {
-            break;
-        } else if (type == "new" && min(output$Project.Start) < today() - days(9)) {
-            break;
-        } else {
-            # assemble new url for scraping
-            page <- page + 1
-            currentUrl <- paste0(url, type, pageMod, page)
-            # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
-        }
+    return(data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
+               "URL"=prj_info$url,
+               "Description"=webdata %>% html_node("div") %>% html_text(),
+               "Backers"=prj_info$backers,
+               "Funding Amount"=prj_info$fundingAmt,
+               "Funding Percent"=prj_info$fundingPcnt,
+               "Average Pledge"=prj_info$avgPledge,
+               "Project Start"=prj_info$startDates,
+               "Project End"=prj_info$endDates,
+               "Time Remaining"=prj_info$remaining,
+               "Kicktraq URL"=ktURLs))
+}
+
+createPostHeader <- function(outputFile) {
+    cat("**What this is**: This is a weekly, curated listing of Kickstarter tabletop games projects",
+        "that are either: a) newly posted in the  past 7 days or b) ending in the next 7 days",
+        "and have at least a fighting chance of being funded.\nAll board game projects meeting",
+        "those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n",
+        "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
+}
+
+createPostBody <- function(section, outputFile, data, sort = F) {
+    section <- tolower(section)
+    acceptableSections <- c('new','end')
+    if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
+    
+    # sorting data, if required
+    if(sort) data <- data[with(data, order(as.character(Title))),]
+    
+    # write the appropriate section header
+    if(section == 'new') {
+        cat("## New This Week\n", file = outputFile, append = TRUE)
+    } else {
+        cat("## Ending This Week\n", file = outputFile, append = TRUE)
     }
     
-    if (type == "end") {
-        return(output[output$Project.End <= (today() + days(8)),])
+    # posts a formatted version of the passed in data to the output file 
+    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = outputFile, append = TRUE)
+    for(i in 1:nrow(data)) {
+        with(data[i,],
+             # to make it easy to read, each line below is a column in the table
+            cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
+                as.character(Funding.Percent),"|",
+                as.character(Backers),"|",
+                as.character(Average.Pledge),"|",
+                as.character(strftime(Project.End, format = "%m-%d")),"|",
+                sep = "", file = outputFile, append = TRUE)
+        )
+        
+        if (section == 'end') {
+            cat("[kicktraq](",as.character(data[i,]$Kicktraq.URL),")", 
+                sep = "", file = outputFile, append = TRUE)
+        }
+        
+        cat("\n", file = outputFile, append = TRUE)
+    }
+    
+}
+    
+createPostFooter <- function(outputFile) {
+    cat("*****\n", file = outputFile, append = TRUE)
+    cat("Looking for more comprehensive Kickstarter gaming information? ",
+        "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
+        "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
+        "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n",
+        file = outputFile, append = TRUE)
+    cat("*****\n", file = outputFile, append = TRUE)
+    cat("## Footnotes\n", file = outputFile, append = TRUE)
+}
+
+integerTest <- function(toTest){
+    
+    if(class(toTest) == "numeric" && toTest%%1 == 0 && toTest > -1) {
+        TRUE
     } else {
-        return(output[output$Project.Start >= (today() - days(9)),])
+        FALSE
     }
 }
 
+createKsPost <- function(type="both", outputFile="kspost.md",
+                           baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
+                           startPage=1, newWindow=7, endWindow=7, saveData = T) {
+    
+    # argument validation
+    # type
+    type <- tolower(gsub(" ", "", type, fixed = TRUE))
+    if (!(type %in% c("end","new", "both"))) stop("Type argument must be one of 'end', 'new', or 'both' (case insensitive).");
+    
+    # startPage
+    if(!integerTest(startPage)) stop("startPage must be a non-negative integer")
+    
+    # newWindow
+    if(!integerTest(newWindow)) stop("newWindow must be a non-negative integer")
+    
+    # endWindow
+    if(!integerTest(endWindow)) stop("endWindow must be a non-negative integer")
+    
+    # we'll let read_html validate the url for us
+    pageMod <- "&page="
+    
+    createPostHeader(outputFile)
+    
+    # because we want to iteratively build a data frame, it's helpful to start with an
+    # empty shell version of it such that we can write one test that is guaranteed to
+    # fail the first time
+    endData <- newData <- data.frame("Title"=character(),
+                                     "URL"=character(),
+                                     "Description"=character(),
+                                     "Backers"=numeric(),
+                                     "Funding Amount"=character(),
+                                     "Funding Percent"=character(),
+                                     "Average Pledge"=character(),
+                                     "Project Start"=numeric(),
+                                     "Project End"=numeric(),
+                                     "Time Remaining"=character(),
+                                     "Kicktraq URL"=character())
+    
+    # put together the 'ending this week' data and dumping it to a file
+    if (type %in% c('e','end','both')) {
+        page <- startPage
+        
+        # grab more data as long as we don't have enough!
+        while(nrow(endData) == 0 || max(endData$Project.End) <= today() + days(endWindow)) {
+            currentUrl <- paste0(baseUrl, 'end', pageMod, page)
+            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
+            page <- page + 1
+            
+            # throw in some wait time so we don't bludgeon their server
+            Sys.sleep(1)
+        }
+        
+        # subset the data, because, ironically, now we'll have too much
+        endData <- endData[endData$Project.End <= (today() + days(endWindow)),]
+        
+        # now dump it to the file
+        createPostBody('end', outputFile, endData)
+    }
+    
+    # put together the 'new this week' data and dumping it to a file
+    if (type %in% c('n','new','both')) {
+        page <- startPage
+        
+        # grab more data as long as we don't have enough!
+        while(nrow(newData) == 0 || min(newData$Project.Start) >= today() - days(newWindow)) {
+            currentUrl <- paste0(baseUrl, 'new', pageMod, page)
+            newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
+            page <- page + 1
+            
+            # throw in some wait time so we don't bludgeon their server
+            Sys.sleep(1)
+        }
+        
+        # subset the data, because, ironically, now we'll have too much
+        newData <- newData[newData$Project.Start >= (today() - days(newWindow)),]
+        
+        # now dump it to the file
+        createPostBody('new', outputFile, newData, sort = T)
+    }
+    
+    createPostFooter(outputFile)
+    
+    return(list("end" = endData, "new" = newData))
+}
+
 # -------- processing boardgame kickstarter projects --------------
-#kicktraqEnding <- scrapeKicktraq("end")
-#kicktraqNew <- scrapeKicktraq("new")
-cat("**What this is**: This is a curated listing of Kickstarter tabletop games projects",
-"that are either: a) newly posted in the  past 7ish days or b) ending in the next 7ish days",
-"and have at least a fighting chance of being funded. By and large they will be board game",
-"projects, but the occasional surprise may also sneak in. Expect new lists each Sunday",
-"sometime between 12:00am and 12:00pm PST.\n*****\n", file = "kspost.md", append = TRUE)
-cat("## Ending This Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
-for(i in 1:nrow(kicktraqEnding)) {
-    with(kicktraqEnding[i,],
-         # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
-         as.character(Funding.Percent),"|",
-         as.character(Backers),"|",
-         as.character(Average.Pledge),"|",
-         as.character(strftime(Project.End, format = "%m-%d")),"|",
-         "  \n",sep = "",
-         file = "kspost.md", append = TRUE)
-    )
-}
-cat("## New Last Week\n", file = "kspost.md", append = TRUE)
-cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = "kspost.md", append = TRUE)
-kicktraqNew <- kicktraqNew[with(kicktraqNew, order(Title)),]
-for(i in 1:nrow(kicktraqNew)) {
-    with(kicktraqNew[i,],
-         # to make it easy to read, each line below is a column in the table
-         cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
-             as.character(Funding.Percent),"|",
-             as.character(Backers),"|",
-             as.character(Average.Pledge),"|",
-             as.character(strftime(Project.End, format = "%m-%d")),"|",
-             "  \n",sep = "",
-             file = "kspost.md", append = TRUE)
-    )
-}
-cat("*****\n", file = "kspost.md", append = TRUE)
-cat("Looking for more comprehensive Kickstarter gaming information? ",
-    "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
-    "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
-    "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).",
-    file = "kspost.md", append = TRUE)
+createKsPost()
