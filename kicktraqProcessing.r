@@ -145,7 +145,7 @@ createPostBody <- function(section, outputFile, data, sort = F) {
         )
         
         if (section == 'end') {
-            cat("[kicktraq](",as.character(data[i,]$Kicktraq.URL),")", 
+            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$Kicktraq.URL)),")", 
                 sep = "", file = outputFile, append = TRUE)
         }
         
