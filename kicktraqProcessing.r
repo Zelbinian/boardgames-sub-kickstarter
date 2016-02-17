@@ -92,10 +92,10 @@ scrapeKicktraqPage <- function(url) {
         strsplit('\n')                      #storing each peice of data separately
     
     # this is the meaty function, the thing that actually processes the scraped data
-    ktURLs <- webdata %>% html_node("a") %>% html_attr("href")
+    ktURLs <- webdata %>% html_node("h2 a") %>% html_attr("href")
     prj_info <- processProjectInfo(prj_details, ktURLs)
     
-    return(data.frame("Title"=webdata %>% html_node("a") %>% html_text(),
+    return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
                "URL"=prj_info$url,
                "Description"=webdata %>% html_node("div") %>% html_text(),
                "Backers"=prj_info$backers,
