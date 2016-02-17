@@ -263,4 +263,4 @@ createKsPost <- function(type="both", outputFile="kspost.md",
 }
 
 # -------- processing boardgame kickstarter projects --------------
-createKsPost()
+output <- createKsPost()
