@@ -109,10 +109,10 @@ scrapeKicktraqPage <- function(url) {
 }
 
 createPostHeader <- function(outputFile) {
-    cat("**What this is**: This is a weekly, curated listing of Kickstarter tabletop games projects",
-        "that are either: a) newly posted in the  past 7 days or b) ending in the next 7 days",
-        "and have at least a fighting chance of being funded.\nAll board game projects meeting",
-        "those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n",
+    cat("## What this is:\n\nThis is a weekly, curated listing of Kickstarter tabletop games projects",
+        "that are either:\n- **newly posted in the past 7 days**, or\n- **ending in the next 7 days**",
+        "and have at least a fighting chance of being funded.\n\nAll board game projects meeting",
+        "those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
         "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
 }
 
