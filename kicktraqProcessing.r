@@ -177,7 +177,7 @@ integerTest <- function(toTest){
     }
 }
 
-createKsPost <- function(type="both", outputFile="kspost.md",
+createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
                            startPage=1, newWindow=7, endWindow=7, saveData = T) {
     
@@ -220,7 +220,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         page <- startPage
         
         # grab more data as long as we don't have enough!
-        while(nrow(endData) == 0 || max(endData$Project.End) <= today() + days(endWindow)) {
+        while(nrow(endData) == 0 || max(endData$Project.End) <= begDate + days(endWindow)) {
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
             endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
@@ -230,7 +230,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         }
         
         # subset the data, because, ironically, now we'll have too much
-        endData <- endData[endData$Project.End <= (today() + days(endWindow)),]
+        endData <- endData[endData$Project.End <= (begDate + days(endWindow)),]
         
         # now dump it to the file
         createPostBody('end', outputFile, endData)
@@ -241,7 +241,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         page <- startPage
         
         # grab more data as long as we don't have enough!
-        while(nrow(newData) == 0 || min(newData$Project.Start) >= today() - days(newWindow)) {
+        while(nrow(newData) == 0 || min(newData$Project.Start) >= begDate - days(newWindow)) {
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
             newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
@@ -251,7 +251,7 @@ createKsPost <- function(type="both", outputFile="kspost.md",
         }
         
         # subset the data, because, ironically, now we'll have too much
-        newData <- newData[newData$Project.Start >= (today() - days(newWindow)),]
+        newData <- newData[newData$Project.Start >= (begDate - days(newWindow)),]
         
         # now dump it to the file
         createPostBody('new', outputFile, newData, sort = T)
