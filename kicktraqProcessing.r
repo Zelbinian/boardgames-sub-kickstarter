@@ -261,6 +261,3 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     
     return(list("end" = endData, "new" = newData))
 }
-
-# -------- processing boardgame kickstarter projects --------------
-output <- createKsPost()
