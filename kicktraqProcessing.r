@@ -60,19 +60,29 @@ processProjectInfo <- function(projects, ktURLs) {
         
         projectPage <- read_html(paste0("http://www.kicktraq.com",url))
         
-        ksURLs <- c(ksURLs, projectPage %>% html_node("#button-backthis") %>% html_attr("href"))
+        # occasionally project pages get removed, so we have to protect against that
+        # using html_nodes instead of html_node helps with this because it doesn't return errors
+        thisKsUrl <- projectPage %>% html_nodes("#button-backthis") %>% html_attr("href")
         
-        projectPageInfo <- projectPage %>%  
-            html_node("#project-info-text") %>%   #selects the div with the project details in it
-            html_text() %>%                     #pulling the text out
-            strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
-            unlist(.)
-        
-        # the pledge is listed in the 9th line
-        # if we substring on the location of the colon + 2, that will reliably get the dollar value
-        avgPledge <- c(avgPledge, 
-                       projectPageInfo[9] %>% 
-                           substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
+        if (length(thisKsUrl) > 0) {
+            ksURLs <- c(ksURLs, thisKsUrl)
+            
+            projectPageInfo <- projectPage %>%  
+                html_nodes("#project-info-text") %>%   #selects the div with the project details in it
+                html_text() %>%                     #pulling the text out
+                strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
+                unlist(.)
+            
+            # the pledge is listed in the 9th line
+            # if we substring on the location of the colon + 2, that will reliably get the dollar value
+            avgPledge <- c(avgPledge, 
+                           projectPageInfo[9] %>% 
+                               substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
+            
+        } else {
+            ksURLs <- c(ksURLs, NA)
+            avgPledge <- c(avgPledge, NA)
+        }
         
         Sys.sleep(1) # try not to hammer their server
     }
@@ -221,7 +231,7 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
         page <- startPage
         
         # grab more data as long as we don't have enough!
-        while(nrow(endData) == 0 || max(endData$Project.End) <= begDate + days(endWindow)) {
+        while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
             endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
             page <- page + 1
