@@ -190,7 +190,7 @@ integerTest <- function(toTest){
 
 createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
-                           startPage=1, newWindow=7, endWindow=7, saveData = T) {
+                           startPage=1, newWindow=7, endWindow=8, saveData = T) {
     
     # argument validation
     # type
