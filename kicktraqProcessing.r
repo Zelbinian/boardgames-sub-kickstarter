@@ -217,17 +217,17 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     # because we want to iteratively build a data frame, it's helpful to start with an
     # empty shell version of it such that we can write one test that is guaranteed to
     # fail the first time
-    endData <- newData <- data.frame("Title"=character(),
-                                     "URL"=character(),
-                                     "Description"=character(),
-                                     "Backers"=numeric(),
-                                     "Funding Amount"=character(),
-                                     "Funding Percent"=character(),
-                                     "Average Pledge"=character(),
-                                     "Project Start"=numeric(),
-                                     "Project End"=numeric(),
-                                     "Time Remaining"=character(),
-                                     "Kicktraq URL"=character())
+    endData <- newData <- data.frame("Title"=character(0),
+                                     "URL"=character(0),
+                                     "Description"=character(0),
+                                     "Backers"=numeric(0),
+                                     "Funding Amount"=character(0),
+                                     "Funding Percent"=character(0),
+                                     "Average Pledge"=character(0),
+                                     "Project Start"=numeric(0),
+                                     "Project End"=numeric(0),
+                                     "Time Remaining"=character(0),
+                                     "Kicktraq URL"=character(0))
     
     # put together the 'ending this week' data and dumping it to a file
     if (type %in% c('e','end','both')) {
