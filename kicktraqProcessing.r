@@ -176,7 +176,10 @@ createPostFooter <- function(outputFile) {
     cat("* `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", file = outputFile, append = TRUE)
     cat("* `#lolwut` is reserved for projects that seem like trainwrecks. Check 'em out for amusement.\n", file = outputFile, append = TRUE)
     cat("* `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n", file = outputFile, append = TRUE)
+    cat("----\n", file = outputFile, append = TRUE)
     cat("* Did I miss something? Particularly stuff that might go in the Comments column? Let me know and I'll add it in.", file = outputFile, append = TRUE)
+    cat("----\n", file = outputFile, append = TRUE)
+    cat("[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.", file = outputFile, append = TRUE)
 }
 
 integerTest <- function(toTest){
