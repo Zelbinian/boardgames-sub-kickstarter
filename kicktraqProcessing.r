@@ -56,12 +56,22 @@ scrapeProjectInfo <- function(ktURLs) {
         
         projectPage <- read_html(paste0("http://www.kicktraq.com",url))
         
-        # occasionally project pages get removed, so we have to protect against that
-        # using html_nodes instead of html_node helps with this because it doesn't return errors
-        thisKsUrl <- projectPage %>% html_nodes("#button-backthis") %>% html_attr("href")
+        # first, grab the url for the actual Kickstarter project
+        thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
         
+        # On occasion, the project page does disappear between grabbing the reference to
+        # it on the project listing and trying to access it directly. It's bizarre.
+        # When this happens, Kicktraq does not return a 404. Instead they generate
+        # some dynamic placeholder page. These placeholder pages have none of the 
+        # elements we're looking for, so the way we figure out if this happens is if
+        # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
-            ksURLs <- c(ksURLs, thisKsUrl)
+            # yay! page exists! 
+            ksURLs <- c(ksURLs, thisKsUrl)     # add URL to vector
+            
+            # grab funding percent and add it to vector
+            funding <- c(funding, 
+                         projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") )
             
             projectPageInfo <- projectPage %>%  
                 html_nodes("#project-info-text") %>%   #selects the div with the project details in it
@@ -75,10 +85,7 @@ scrapeProjectInfo <- function(ktURLs) {
                            projectPageInfo[9] %>% 
                                substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
             
-        } else {
-            ksURLs <- c(ksURLs, NA)
-            avgPledge <- c(avgPledge, NA)
-        }
+        } 
         
         Sys.sleep(1) # try not to hammer their server
     }
