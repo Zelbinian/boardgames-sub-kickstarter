@@ -21,7 +21,7 @@ parseStartDate <- function(asIsDate) {
     return(startDate)
 }
 
-processProjectInfo <- function(projects, ktURLs) {
+processProjectInfo <- function(ktURLs) {
     
     backers <- vector()
     funding <- vector()
@@ -48,9 +48,7 @@ processProjectInfo <- function(projects, ktURLs) {
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
         startDates <- c(startDates, parseStartDate(dates[1]))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
-    }
-    
-    
+    }   
     
     # this is based on the assumption that the urls and the projects come in the same order...
     # ... and they do!
@@ -92,15 +90,15 @@ processProjectInfo <- function(projects, ktURLs) {
 scrapeKicktraqPage <- function(url) {
     webdata <- read_html(url)
     
-    # The project details, annoyingly, are just a text blob, so need to parse them out
-    prj_details <- webdata %>%                      #data source
-        html_nodes(".project-details") %>%   #selects the div with the project details in it
-        html_text() %>%                     #pulling the text out
-        strsplit('\n')                      #storing each peice of data separately
+    # # The project details, annoyingly, are just a text blob, so need to parse them out
+    # prj_details <- webdata %>%                      #data source
+    #     html_nodes(".project-details") %>%   #selects the div with the project details in it
+    #     html_text() %>%                     #pulling the text out
+    #     strsplit('\n')                      #storing each peice of data separately
     
     # this is the meaty function, the thing that actually processes the scraped data
     ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
-    prj_info <- processProjectInfo(prj_details, ktURLs)
+    prj_info <- processProjectInfo(ktURLs)
     
     return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
                "URL"=prj_info$url,
