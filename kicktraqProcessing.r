@@ -30,25 +30,25 @@ processProjectInfo <- function(ktURLs) {
     endDates <- as.Date(vector())   # yeah, I know
     ksURLs <- vector()
     
-    for (prj in projects) {
-        prj <- prj[2:6]
-        prj <- gsub('\t','', prj)
-        
-        splitData <- strsplit(prj, ": ")
-        dates <- unlist(strsplit(splitData[[4]][2], " -> ")) # their date entry is "special"
-        
-        # the data is in the form Name: Value, so to get the value after we split it
-        # we need to select the 2nd entry in each list
-        backers <- c(backers, splitData[[1]][2])
-        funding <- c(funding, splitData[[2]][2])
-        fundingAmt <- trimws(sub("\\(.*\\)", "", funding))
-        fundingPcnt <- trimws(sub("[^(]+\\(([^)]+)\\).*", "\\1", funding))
-        # using lubridate to make the date stuff less onerous
-        # but we need just a regular Date class because otherwise the timezone
-        # stuff gets really weird, and we don't know the timezone so we shouldn't store it
-        startDates <- c(startDates, parseStartDate(dates[1]))
-        endDates <- c(endDates, as.Date(mdy(dates[2])))
-    }   
+    # for (prj in projects) {
+    #     prj <- prj[2:6]
+    #     prj <- gsub('\t','', prj)
+    #     
+    #     splitData <- strsplit(prj, ": ")
+    #     dates <- unlist(strsplit(splitData[[4]][2], " -> ")) # their date entry is "special"
+    #     
+    #     # the data is in the form Name: Value, so to get the value after we split it
+    #     # we need to select the 2nd entry in each list
+    #     backers <- c(backers, splitData[[1]][2])
+    #     funding <- c(funding, splitData[[2]][2])
+    #     fundingAmt <- trimws(sub("\\(.*\\)", "", funding))
+    #     fundingPcnt <- trimws(sub("[^(]+\\(([^)]+)\\).*", "\\1", funding))
+    #     # using lubridate to make the date stuff less onerous
+    #     # but we need just a regular Date class because otherwise the timezone
+    #     # stuff gets really weird, and we don't know the timezone so we shouldn't store it
+    #     startDates <- c(startDates, parseStartDate(dates[1]))
+    #     endDates <- c(endDates, as.Date(mdy(dates[2])))
+    # }   
     
     # this is based on the assumption that the urls and the projects come in the same order...
     # ... and they do!
