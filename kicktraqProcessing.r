@@ -28,7 +28,6 @@ processProjectInfo <- function(projects, ktURLs) {
     avgPledge <- vector()
     startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
-    remaining <- vector()
     ksURLs <- vector()
     
     for (prj in projects) {
@@ -49,7 +48,6 @@ processProjectInfo <- function(projects, ktURLs) {
         # stuff gets really weird, and we don't know the timezone so we shouldn't store it
         startDates <- c(startDates, parseStartDate(dates[1]))
         endDates <- c(endDates, as.Date(mdy(dates[2])))
-        remaining <- c(remaining, splitData[[5]][2])
     }
     
     
@@ -88,8 +86,7 @@ processProjectInfo <- function(projects, ktURLs) {
     }
     
     return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPcnt,
-                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates,
-                "remaining"=remaining))
+                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
 scrapeKicktraqPage <- function(url) {
@@ -114,7 +111,6 @@ scrapeKicktraqPage <- function(url) {
                "Average Pledge"=prj_info$avgPledge,
                "Project Start"=prj_info$startDates,
                "Project End"=prj_info$endDates,
-               "Time Remaining"=prj_info$remaining,
                "Kicktraq URL"=ktURLs))
 }
 
@@ -225,7 +221,6 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
                                      "Average Pledge"=character(0),
                                      "Project Start"=numeric(0),
                                      "Project End"=numeric(0),
-                                     "Time Remaining"=character(0),
                                      "Kicktraq URL"=character(0))
     
     # put together the 'ending this week' data and dumping it to a file
