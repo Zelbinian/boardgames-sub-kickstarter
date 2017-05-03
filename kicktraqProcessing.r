@@ -77,13 +77,11 @@ scrapeProjectInfo <- function(ktURLs) {
                 html_nodes("#project-info-text") %>%   #selects the div with the project details in it
                 html_text() %>%                     #pulling the text out
                 strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
-                unlist(.)
+                unlist()
             
-            # the pledge is listed in the 9th line
-            # if we substring on the location of the colon + 2, that will reliably get the dollar value
-            avgPledge <- c(avgPledge, 
-                           projectPageInfo[9] %>% 
-                               substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
+            # at this point we have two cases: projects with no backers will have 60 
+            # lines of projectPageInfo, other projects will have 63. This means some
+            # info is omitted, so where things are found will change.
             
         } 
         
