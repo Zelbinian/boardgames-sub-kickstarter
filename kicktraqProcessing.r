@@ -21,7 +21,7 @@ parseStartDate <- function(asIsDate) {
     return(startDate)
 }
 
-processProjectInfo <- function(ktURLs) {
+scrapeProjectInfo <- function(ktURLs) {
     
     backers <- vector()
     funding <- vector()
@@ -87,7 +87,7 @@ processProjectInfo <- function(ktURLs) {
                 "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
-scrapeKicktraqPage <- function(url) {
+scrapeProjectsList <- function(url) {
     webdata <- read_html(url)
     
     # # The project details, annoyingly, are just a text blob, so need to parse them out
@@ -98,7 +98,7 @@ scrapeKicktraqPage <- function(url) {
     
     # this is the meaty function, the thing that actually processes the scraped data
     ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
-    prj_info <- processProjectInfo(ktURLs)
+    prj_info <- scrapeProjectInfo(ktURLs)
     
     return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
                "URL"=prj_info$url,
@@ -228,7 +228,7 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
         # grab more data as long as we don't have enough!
         while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
-            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
+            endData <- rbind(endData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
@@ -249,7 +249,7 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
         # grab more data as long as we don't have enough!
         while(nrow(newData) == 0 || min(newData$Project.Start) >= begDate - days(newWindow)) {
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
-            newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
+            newData <- rbind(newData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
