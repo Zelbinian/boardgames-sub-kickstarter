@@ -90,21 +90,21 @@ processProjectInfo <- function(projects, ktURLs) {
 }
 
 scrapeKicktraqPage <- function(url) {
-    webdata <- read_html(url) %>% html_nodes(".project-infobox")
+    webdata <- read_html(url)
     
     # The project details, annoyingly, are just a text blob, so need to parse them out
     prj_details <- webdata %>%                      #data source
-        html_node(".project-details") %>%   #selects the div with the project details in it
+        html_nodes(".project-details") %>%   #selects the div with the project details in it
         html_text() %>%                     #pulling the text out
         strsplit('\n')                      #storing each peice of data separately
     
     # this is the meaty function, the thing that actually processes the scraped data
-    ktURLs <- webdata %>% html_node("h2 a") %>% html_attr("href")
+    ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
     prj_info <- processProjectInfo(prj_details, ktURLs)
     
     return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
                "URL"=prj_info$url,
-               "Description"=webdata %>% html_node("div") %>% html_text(),
+               "Description"=webdata %>% html_node(".project-infobox > div:nth-child(2)") %>% html_text(),
                "Backers"=prj_info$backers,
                "Funding Amount"=prj_info$fundingAmt,
                "Funding Percent"=prj_info$fundingPcnt,
