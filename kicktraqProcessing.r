@@ -21,6 +21,10 @@ parseStartDate <- function(asIsDate) {
     return(startDate)
 }
 
+findStart <- function(text) {
+    return(text %>% gregexpr(":", ., fixed = TRUE) %>% unlist() + 2)
+}
+
 scrapeProjectInfo <- function(ktURLs) {
     
     backers <- vector()
@@ -83,6 +87,17 @@ scrapeProjectInfo <- function(ktURLs) {
             # at this point we have two cases: projects with no backers will have 60 
             # lines of projectPageInfo, other projects will have 63. This means some
             # info is omitted, so where things are found will change.
+            
+            if (length(projectPageInfo) == 63) {
+                
+                fundingStr <- projectPageInfo
+            } else {
+                
+            }
+            
+            backerStr <- projectPageInfo[5]
+            backers <- c(backers,
+                         substr(backerStr, findStart(backerStr), nchar(backerStr)))
             
         } 
         
