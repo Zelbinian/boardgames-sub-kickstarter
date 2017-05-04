@@ -91,13 +91,15 @@ scrapeProjectInfo <- function(ktURLs) {
             if (length(projectPageInfo) == 63) {
                 
                 fundingStr <- projectPageInfo[10]
+                datesStr <- projectPageInfo[12]
             } else {
                 fundingStr <- projectPageInfo[7]
+                datesStr <- projectPageInfo[12]
             }
             
             backerStr <- projectPageInfo[5]
             backers <- c(backers,
-                         substr(backerStr, findStart(backerStr), nchar(backerStr)))
+                         substring(backerStr, 10)) # the position is predictable
             
         } 
         
