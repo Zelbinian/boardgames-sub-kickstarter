@@ -78,7 +78,7 @@ scrapeProjectInfo <- function(ktURLs) {
                          projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") )
             
             projectPageInfo <- projectPage %>%  
-                html_nodes("#project-info-text") %>%   #selects the div with the project details in it
+                html_node("#project-info-text") %>%   #selects the div with the project details in it
                 html_text() %>%                     #pulling the text out
                 strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
                 unlist() %>%
@@ -90,9 +90,9 @@ scrapeProjectInfo <- function(ktURLs) {
             
             if (length(projectPageInfo) == 63) {
                 
-                fundingStr <- projectPageInfo
+                fundingStr <- projectPageInfo[10]
             } else {
-                
+                fundingStr <- projectPageInfo[7]
             }
             
             backerStr <- projectPageInfo[5]
