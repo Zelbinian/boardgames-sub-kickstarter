@@ -24,7 +24,8 @@ parseStartDate <- function(asIsDate) {
 scrapeProjectInfo <- function(ktURLs) {
     
     backers <- vector()
-    funding <- vector()
+    fundingPct <- vector()
+    fundingAmt <- vector()
     avgPledge <- vector()
     startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
@@ -50,8 +51,6 @@ scrapeProjectInfo <- function(ktURLs) {
     #     endDates <- c(endDates, as.Date(mdy(dates[2])))
     # }   
     
-    # this is based on the assumption that the urls and the projects come in the same order...
-    # ... and they do!
     for(url in ktURLs) {
         
         projectPage <- read_html(paste0("http://www.kicktraq.com",url))
@@ -85,18 +84,26 @@ scrapeProjectInfo <- function(ktURLs) {
             # info is omitted, so where things are found will change.
             
             if (length(projectPageInfo) == 63) {
-                
-                fundingStr <- projectPageInfo[10]
-                datesStr <- projectPageInfo[12]
+                fundingAmtStr <- projectPageInfo[10] %>% substring(10)
+                datesStr <- projectPageInfo[12] %>% substring(8)
+                avgPledgeStr <- projectPageInfo[8] %>% substring(28)
             } else {
-                fundingStr <- projectPageInfo[7]
-                datesStr <- projectPageInfo[12]
+                fundingAmtStr <- projectPageInfo[7] %>% substring(10)
+                datesStr <- projectPageInfo[12] %>% substring(8)
+                avgPledgeStr <- NA
             }
             
-            backerStr <- projectPageInfo[5]
-            backers <- c(backers,
-                         substring(backerStr, 10)) # the position is predictable
+            # these items are in the same location regardless
+            backerStr <- projectPageInfo[5] %>% substring(10)
+            fundingPctStr <- projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") 
             
+            # now that we have all the data, stitching together
+            backers <- c(backers, backerStr)
+            fundingPct <- c(fundingPct, fundingPctStr)
+            fundingAmt <- c(fundingAmt, fundingAmtStr)
+            avgPledge <- c(avgPledge, avgPledgeSt)
+            funding <- c(funding, fundingStr)
+            ksURLs <- c(ksURLs, thisKsUrl)
         } 
         
         Sys.sleep(1) # try not to hammer their server
