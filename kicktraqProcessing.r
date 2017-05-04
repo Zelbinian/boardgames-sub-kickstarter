@@ -21,10 +21,6 @@ parseStartDate <- function(asIsDate) {
     return(startDate)
 }
 
-findStart <- function(text) {
-    return(text %>% gregexpr(":", ., fixed = TRUE) %>% unlist() + 2)
-}
-
 scrapeProjectInfo <- function(ktURLs) {
     
     backers <- vector()
