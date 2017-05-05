@@ -85,11 +85,11 @@ scrapeProjectInfo <- function(ktURLs) {
             
             if (length(projectPageInfo) == 63) {
                 fundingAmtStr <- projectPageInfo[10] %>% substring(10)
-                datesStr <- projectPageInfo[12] %>% substring(8)
-                avgPledgeStr <- projectPageInfo[8] %>% substring(28)
+                datesStrs <- projectPageInfo[12] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
+                avgPledgeStr <- projectPageInfo[8] %>% substring(28) 
             } else {
                 fundingAmtStr <- projectPageInfo[7] %>% substring(10)
-                datesStr <- projectPageInfo[12] %>% substring(8)
+                datesStrs <- projectPageInfo[12] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
                 avgPledgeStr <- NA
             }
             
@@ -97,12 +97,22 @@ scrapeProjectInfo <- function(ktURLs) {
             backerStr <- projectPageInfo[5] %>% substring(10)
             fundingPctStr <- projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") 
             
+            # processing date strings
+            
+            
             # now that we have all the data, stitching together
             backers <- c(backers, backerStr)
             fundingPct <- c(fundingPct, fundingPctStr)
             fundingAmt <- c(fundingAmt, fundingAmtStr)
             avgPledge <- c(avgPledge, avgPledgeSt)
-            funding <- c(funding, fundingStr)
+            startDates <- c(startDates, parseStartDate(datesStrs[1]))
+            # this one looks a little complicated so let me explain
+            # The end date has some parenthetical stuff attached we have to strip out.
+            # strsplit lets us do this really easily, and the first part of the list it
+            # returns is the actual date. It must be unlisted to access, and because these
+            # functions return things in this way, the magrittr pipe (%>%) can't be used.
+            endDates <- c(endDates,
+                          unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>% as.Date())
             ksURLs <- c(ksURLs, thisKsUrl)
         } 
         
