@@ -66,11 +66,6 @@ scrapeProjectInfo <- function(ktURLs) {
         # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
             # yay! page exists! 
-            ksURLs <- c(ksURLs, thisKsUrl)     # add URL to vector
-            
-            # grab funding percent and add it to vector
-            funding <- c(funding, 
-                         projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") )
             
             projectPageInfo <- projectPage %>%  
                 html_node("#project-info-text") %>%   #selects the div with the project details in it
