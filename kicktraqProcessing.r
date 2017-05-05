@@ -11,7 +11,7 @@ library(lubridate)
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
-    startDate <- as.Date(parse_date_time(asIsDate, "Bd"))
+    startDate <- as.Date(parse_date_time(asIsDate, "bd"))
     curDate <- Sys.Date()
     
     if (month(startDate)==12 && month(curDate)==1) {
@@ -30,26 +30,6 @@ scrapeProjectInfo <- function(ktURLs) {
     startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
     ksURLs <- vector()
-    
-    # for (prj in projects) {
-    #     prj <- prj[2:6]
-    #     prj <- gsub('\t','', prj)
-    #     
-    #     splitData <- strsplit(prj, ": ")
-    #     dates <- unlist(strsplit(splitData[[4]][2], " -> ")) # their date entry is "special"
-    #     
-    #     # the data is in the form Name: Value, so to get the value after we split it
-    #     # we need to select the 2nd entry in each list
-    #     backers <- c(backers, splitData[[1]][2])
-    #     funding <- c(funding, splitData[[2]][2])
-    #     fundingAmt <- trimws(sub("\\(.*\\)", "", funding))
-    #     fundingPcnt <- trimws(sub("[^(]+\\(([^)]+)\\).*", "\\1", funding))
-    #     # using lubridate to make the date stuff less onerous
-    #     # but we need just a regular Date class because otherwise the timezone
-    #     # stuff gets really weird, and we don't know the timezone so we shouldn't store it
-    #     startDates <- c(startDates, parseStartDate(dates[1]))
-    #     endDates <- c(endDates, as.Date(mdy(dates[2])))
-    # }   
     
     for(url in ktURLs) {
         
@@ -84,7 +64,7 @@ scrapeProjectInfo <- function(ktURLs) {
                 avgPledgeStr <- projectPageInfo[8] %>% substring(28) 
             } else {
                 fundingAmtStr <- projectPageInfo[7] %>% substring(10)
-                datesStrs <- projectPageInfo[12] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
+                datesStrs <- projectPageInfo[9] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
                 avgPledgeStr <- NA
             }
             
@@ -99,22 +79,24 @@ scrapeProjectInfo <- function(ktURLs) {
             backers <- c(backers, backerStr)
             fundingPct <- c(fundingPct, fundingPctStr)
             fundingAmt <- c(fundingAmt, fundingAmtStr)
-            avgPledge <- c(avgPledge, avgPledgeSt)
+            avgPledge <- c(avgPledge, avgPledgeStr)
             startDates <- c(startDates, parseStartDate(datesStrs[1]))
             # this one looks a little complicated so let me explain
             # The end date has some parenthetical stuff attached we have to strip out.
             # strsplit lets us do this really easily, and the first part of the list it
-            # returns is the actual date. It must be unlisted to access, and because these
-            # functions return things in this way, the magrittr pipe (%>%) can't be used.
+            # returns is the actual date. It must be unlisted to access. Because we're 
+            # only using part of what the function returns, magrittr can't be used for that.
+            # 
             endDates <- c(endDates,
-                          unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>% as.Date())
+                          unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>%
+                              parse_date_time("Bd") %>% as.Date())
             ksURLs <- c(ksURLs, thisKsUrl)
         } 
         
         Sys.sleep(1) # try not to hammer their server
     }
     
-    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPcnt,
+    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
                 "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
