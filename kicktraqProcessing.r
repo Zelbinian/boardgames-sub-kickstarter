@@ -9,6 +9,8 @@ library(rvest)
 library(magrittr)
 library(lubridate)
 
+sleeptime__ <- 5
+
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
     startDate <- as.Date(parse_date_time(asIsDate, "bd"))
@@ -35,6 +37,8 @@ scrapeProjectInfo <- function(ktURLs) {
         
         projectPage <- read_html(paste0("http://www.kicktraq.com",url))
         
+        cat(paste("Currently processing", url))
+        
         # first, grab the url for the actual Kickstarter project
         thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
         
@@ -46,6 +50,7 @@ scrapeProjectInfo <- function(ktURLs) {
         # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
             # yay! page exists! 
+            cat(" and it exists \n")
             
             projectPageInfo <- projectPage %>%  
                 html_node("#project-info-text") %>%   #selects the div with the project details in it
@@ -91,9 +96,10 @@ scrapeProjectInfo <- function(ktURLs) {
                           unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>%
                               parse_date_time("Bd") %>% as.Date())
             ksURLs <- c(ksURLs, thisKsUrl)
+            print(paste("There are now",length(ksURLs),"items processed."))
         } 
         
-        Sys.sleep(1) # try not to hammer their server
+        Sys.sleep(sleeptime__) # try not to hammer their server
     }
     
     return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
@@ -108,7 +114,7 @@ scrapeProjectsList <- function(url) {
     #     html_nodes(".project-details") %>%   #selects the div with the project details in it
     #     html_text() %>%                     #pulling the text out
     #     strsplit('\n')                      #storing each peice of data separately
-    
+    print("Page has been read.")
     # this is the meaty function, the thing that actually processes the scraped data
     ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
     prj_info <- scrapeProjectInfo(ktURLs)
@@ -238,14 +244,17 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     if (type %in% c('e','end','both')) {
         page <- startPage
         
+        print("Processing projects ending soon.")
+        
         # grab more data as long as we don't have enough!
         while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
+            print(paste("Page ",page))
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
             endData <- rbind(endData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
+            Sys.sleep(sleeptime__)
         }
         
         # subset the data, because, ironically, now we'll have too much
@@ -258,15 +267,16 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     # put together the 'new this week' data and dumping it to a file
     if (type %in% c('n','new','both')) {
         page <- startPage
-        
+        print("Processing new projects.")
         # grab more data as long as we don't have enough!
         while(nrow(newData) == 0 || min(newData$Project.Start) >= begDate - days(newWindow)) {
+            print(paste("Page ",page))
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
             newData <- rbind(newData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
+            Sys.sleep(sleeptime__)
         }
         
         # subset the data, because, ironically, now we'll have too much
