@@ -119,9 +119,9 @@ scrapeProjectsList <- function(url) {
     ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
     prj_info <- scrapeProjectInfo(ktURLs)
     
-    return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
+    return(data.frame("Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
                "URL"=prj_info$url,
-               "Description"=webdata %>% html_node(".project-infobox > div:nth-child(2)") %>% html_text(),
+               "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
                "Backers"=prj_info$backers,
                "Funding Amount"=prj_info$fundingAmt,
                "Funding Percent"=prj_info$fundingPcnt,
