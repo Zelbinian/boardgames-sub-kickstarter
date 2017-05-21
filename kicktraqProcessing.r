@@ -101,7 +101,7 @@ scrapeProjectInfo <- function(ktURLs) {
             # 
             endDates <- c(endDates,
                           unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>%
-                              parse_date_time("Bd") %>% as.Date())
+                              parse_date_time("bd") %>% as.Date())
             ksURLs <- c(ksURLs, thisKsUrl)
             print(paste("There are now",length(ksURLs),"items processed."))
         } 
