@@ -8,6 +8,7 @@ if(length(newPackages)) install.packages(newPackages)
 library(rvest)
 library(magrittr)
 library(lubridate)
+library(R.utils)
 
 sleeptime__ <- 5
 
@@ -34,10 +35,16 @@ scrapeProjectInfo <- function(ktURLs) {
     ksURLs <- vector()
     
     for(url in ktURLs) {
-        
-        projectPage <- read_html(paste0("http://www.kicktraq.com",url))
+      
+      repeat{
+        projectPage <- withTimeout(
+          read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__
+        )
         
         cat(paste("Currently processing", url))
+        
+        if(!is.null(projectPage)) break;
+      }
         
         # first, grab the url for the actual Kickstarter project
         thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
