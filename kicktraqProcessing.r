@@ -1,7 +1,7 @@
 # -------- setup procedures ------------------
 
 # checking for required packages, installing if necessary
-reqPackages <- c("rvest", "magrittr", "lubridate")
+reqPackages <- c("rvest", "magrittr", "lubridate", "stringr")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
@@ -9,6 +9,7 @@ library(rvest)
 library(magrittr)
 library(lubridate)
 library(R.utils)
+library(stringr)
 
 sleeptime__ <- 5
 
@@ -22,6 +23,27 @@ parseStartDate <- function(asIsDate) {
     }
     
     return(startDate)
+}
+
+parseEndDate <- function(asIsDate) {
+    endDate <- str_match(asIsDate, "^[\\sa-zA-Z0-9]+")[1,] %>% parse_date_time("bd") %>% as.Date()
+    curDate <- Sys.Date()
+    
+    if (month(endDate)==1 && month(curDate)==12) {
+        year(endDate) <- year(curDate) + 1
+    }
+    
+    return(endDate)
+}
+
+# This function makes use of grep to find data in the text blob
+
+extractProjectInfo <- function(textblob, toExtract) {
+    extracted <- grep(toExtract, textblob, fixed = TRUE, value = TRUE) %>%
+        strsplit(":") %>% unlist() %>% .[2] %>% trimws()
+    
+    if (length(extracted) == 0) return(NA)
+    else return(extracted)
 }
 
 scrapeProjectInfo <- function(ktURLs) {
@@ -38,7 +60,7 @@ scrapeProjectInfo <- function(ktURLs) {
       
       repeat{
         projectPage <- withTimeout(
-          read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__
+          read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__ * 10
         )
         
         cat(paste("Currently processing", url))
@@ -66,43 +88,20 @@ scrapeProjectInfo <- function(ktURLs) {
                 unlist() %>%
                 trimws()                            # Trimming white space to make life easier later
             
-            # at this point we have two cases: projects with no backers will have 60 
-            # lines of projectPageInfo, other projects will have 63. This means some
-            # info is omitted, so where things are found will change.
+            # adding new data to the vectors
+            backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:"))
+            fundingPct <- c(fundingPct, 
+                            projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
+            fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
+            avgPledge <- c(avgPledge, extractProjectInfo(projectPageInfo, "Average Pledge Per Backer:"))
             
-            if (length(projectPageInfo) == 63) {
-                fundingAmtStr <- projectPageInfo[10] %>% substring(10)
-                datesStrs <- projectPageInfo[12] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
-                avgPledgeStr <- projectPageInfo[8] %>% substring(28) 
-            } else {
-                fundingAmtStr <- projectPageInfo[7] %>% substring(10)
-                datesStrs <- projectPageInfo[9] %>% substring(8) %>% strsplit(" -> ") %>% unlist()
-                avgPledgeStr <- NA
-            }
-            
-            # these items are in the same location regardless
-            backerStr <- projectPageInfo[5] %>% substring(10)
-            fundingPctStr <- projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title") 
-            
-            # processing date strings
-            
-            
-            # now that we have all the data, stitching together
-            backers <- c(backers, backerStr)
-            fundingPct <- c(fundingPct, fundingPctStr)
-            fundingAmt <- c(fundingAmt, fundingAmtStr)
-            avgPledge <- c(avgPledge, avgPledgeStr)
+            # the dates are in a unique format so the processing here is a bit special and 
+            # we need a helper variable and some helper functions
+            datesStrs <- extractProjectInfo(projectPageInfo, "Dates:") %>% strsplit(" -> ") %>% unlist()
             startDates <- c(startDates, parseStartDate(datesStrs[1]))
-            # this one looks a little complicated so let me explain
-            # The end date has some parenthetical stuff attached we have to strip out.
-            # strsplit lets us do this really easily, and the first part of the list it
-            # returns is the actual date. It must be unlisted to access. Because we're 
-            # only using part of what the function returns, magrittr can't be used for that.
-            # 
-            endDates <- c(endDates,
-                          unlist(strsplit(datesStrs[2], "(", fixed = TRUE))[1] %>%
-                              parse_date_time("bd") %>% as.Date())
+            endDates <- c(endDates, parseEndDate(datesStrs[2]))
             ksURLs <- c(ksURLs, thisKsUrl)
+            
             print(paste("There are now",length(ksURLs),"items processed."))
         } 
         
@@ -276,7 +275,7 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
         page <- startPage
         print("Processing new projects.")
         # grab more data as long as we don't have enough!
-        while(nrow(newData) == 0 || min(newData$Project.Start) >= begDate - days(newWindow)) {
+        while(nrow(newData) == 0 || min(newData$Project.Start, na.rm = TRUE) >= begDate - days(newWindow)) {
             print(paste("Page ",page))
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
             newData <- rbind(newData, scrapeProjectsList(currentUrl))
