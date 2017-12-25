@@ -1,17 +1,21 @@
 # -------- setup procedures ------------------
 
 # checking for required packages, installing if necessary
-reqPackages <- c("rvest", "magrittr", "lubridate")
+reqPackages <- c("rvest", "magrittr", "lubridate", "stringr")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
 library(rvest)
 library(magrittr)
 library(lubridate)
+library(R.utils)
+library(stringr)
+
+sleeptime__ <- 5
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
-    startDate <- as.Date(parse_date_time(asIsDate, "Bd"))
+    startDate <- as.Date(parse_date_time(asIsDate, "bd"))
     curDate <- Sys.Date()
     
     if (month(startDate)==12 && month(curDate)==1) {
@@ -21,100 +25,115 @@ parseStartDate <- function(asIsDate) {
     return(startDate)
 }
 
-processProjectInfo <- function(projects, ktURLs) {
+parseEndDate <- function(asIsDate) {
+    endDate <- str_match(asIsDate, "^[\\sa-zA-Z0-9]+")[1,] %>% parse_date_time("bd") %>% as.Date()
+    curDate <- Sys.Date()
+    
+    if (month(endDate)==1 && month(curDate)==12) {
+        year(endDate) <- year(curDate) + 1
+    }
+    
+    return(endDate)
+}
+
+# This function makes use of grep to find data in the text blob
+
+extractProjectInfo <- function(textblob, toExtract) {
+    extracted <- grep(toExtract, textblob, fixed = TRUE, value = TRUE) %>%
+        strsplit(":") %>% unlist() %>% .[2] %>% trimws()
+    
+    if (length(extracted) == 0) return(NA)
+    else return(extracted)
+}
+
+scrapeProjectInfo <- function(ktURLs) {
     
     backers <- vector()
-    funding <- vector()
+    fundingPct <- vector()
+    fundingAmt <- vector()
     avgPledge <- vector()
     startDates <- as.Date(vector())
     endDates <- as.Date(vector())   # yeah, I know
-    remaining <- vector()
     ksURLs <- vector()
     
-    for (prj in projects) {
-        prj <- prj[2:6]
-        prj <- gsub('\t','', prj)
-        
-        splitData <- strsplit(prj, ": ")
-        dates <- unlist(strsplit(splitData[[4]][2], " -> ")) # their date entry is "special"
-        
-        # the data is in the form Name: Value, so to get the value after we split it
-        # we need to select the 2nd entry in each list
-        backers <- c(backers, splitData[[1]][2])
-        funding <- c(funding, splitData[[2]][2])
-        fundingAmt <- trimws(sub("\\(.*\\)", "", funding))
-        fundingPcnt <- trimws(sub("[^(]+\\(([^)]+)\\).*", "\\1", funding))
-        # using lubridate to make the date stuff less onerous
-        # but we need just a regular Date class because otherwise the timezone
-        # stuff gets really weird, and we don't know the timezone so we shouldn't store it
-        startDates <- c(startDates, parseStartDate(dates[1]))
-        endDates <- c(endDates, as.Date(mdy(dates[2])))
-        remaining <- c(remaining, splitData[[5]][2])
-    }
-    
-    
-    
-    # this is based on the assumption that the urls and the projects come in the same order...
-    # ... and they do!
     for(url in ktURLs) {
+      
+      repeat{
+        projectPage <- withTimeout(
+          read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__ * 10
+        )
         
-        projectPage <- read_html(paste0("http://www.kicktraq.com",url))
+        cat(paste("Currently processing", url))
         
-        # occasionally project pages get removed, so we have to protect against that
-        # using html_nodes instead of html_node helps with this because it doesn't return errors
-        thisKsUrl <- projectPage %>% html_nodes("#button-backthis") %>% html_attr("href")
+        if(!is.null(projectPage)) break;
+      }
         
+        # first, grab the url for the actual Kickstarter project
+        thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
+        
+        # On occasion, the project page does disappear between grabbing the reference to
+        # it on the project listing and trying to access it directly. It's bizarre.
+        # When this happens, Kicktraq does not return a 404. Instead they generate
+        # some dynamic placeholder page. These placeholder pages have none of the 
+        # elements we're looking for, so the way we figure out if this happens is if
+        # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
-            ksURLs <- c(ksURLs, thisKsUrl)
+            # yay! page exists! 
+            cat(" and it exists \n")
             
             projectPageInfo <- projectPage %>%  
-                html_nodes("#project-info-text") %>%   #selects the div with the project details in it
+                html_node("#project-info-text") %>%   #selects the div with the project details in it
                 html_text() %>%                     #pulling the text out
                 strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
-                unlist(.)
+                unlist() %>%
+                trimws()                            # Trimming white space to make life easier later
             
-            # the pledge is listed in the 9th line
-            # if we substring on the location of the colon + 2, that will reliably get the dollar value
-            avgPledge <- c(avgPledge, 
-                           projectPageInfo[9] %>% 
-                               substring(., gregexpr(pattern = ':',.) %>% unlist(.) + 2))
+            # adding new data to the vectors
+            backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:"))
+            fundingPct <- c(fundingPct, 
+                            projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
+            fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
+            avgPledge <- c(avgPledge, extractProjectInfo(projectPageInfo, "Average Pledge Per Backer:"))
             
-        } else {
-            ksURLs <- c(ksURLs, NA)
-            avgPledge <- c(avgPledge, NA)
-        }
+            # the dates are in a unique format so the processing here is a bit special and 
+            # we need a helper variable and some helper functions
+            datesStrs <- extractProjectInfo(projectPageInfo, "Dates:") %>% strsplit(" -> ") %>% unlist()
+            startDates <- c(startDates, parseStartDate(datesStrs[1]))
+            endDates <- c(endDates, parseEndDate(datesStrs[2]))
+            ksURLs <- c(ksURLs, thisKsUrl)
+            
+            print(paste("There are now",length(ksURLs),"items processed."))
+        } 
         
-        Sys.sleep(1) # try not to hammer their server
+        Sys.sleep(sleeptime__) # try not to hammer their server
     }
     
-    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPcnt,
-                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates,
-                "remaining"=remaining))
+    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
+                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
-scrapeKicktraqPage <- function(url) {
-    webdata <- read_html(url) %>% html_nodes(".project-infobox")
+scrapeProjectsList <- function(url) {
+    webdata <- read_html(url)
     
-    # The project details, annoyingly, are just a text blob, so need to parse them out
-    prj_details <- webdata %>%                      #data source
-        html_node(".project-details") %>%   #selects the div with the project details in it
-        html_text() %>%                     #pulling the text out
-        strsplit('\n')                      #storing each peice of data separately
-    
+    # # The project details, annoyingly, are just a text blob, so need to parse them out
+    # prj_details <- webdata %>%                      #data source
+    #     html_nodes(".project-details") %>%   #selects the div with the project details in it
+    #     html_text() %>%                     #pulling the text out
+    #     strsplit('\n')                      #storing each peice of data separately
+    print("Page has been read.")
     # this is the meaty function, the thing that actually processes the scraped data
-    ktURLs <- webdata %>% html_node("h2 a") %>% html_attr("href")
-    prj_info <- processProjectInfo(prj_details, ktURLs)
+    ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
+    prj_info <- scrapeProjectInfo(ktURLs)
     
-    return(data.frame("Title"=webdata %>% html_node("h2 a") %>% html_text(),
+    return(data.frame("Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
                "URL"=prj_info$url,
-               "Description"=webdata %>% html_node("div") %>% html_text(),
+               "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
                "Backers"=prj_info$backers,
                "Funding Amount"=prj_info$fundingAmt,
                "Funding Percent"=prj_info$fundingPcnt,
                "Average Pledge"=prj_info$avgPledge,
                "Project Start"=prj_info$startDates,
                "Project End"=prj_info$endDates,
-               "Time Remaining"=prj_info$remaining,
                "Kicktraq URL"=ktURLs))
 }
 
@@ -225,21 +244,23 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
                                      "Average Pledge"=character(0),
                                      "Project Start"=numeric(0),
                                      "Project End"=numeric(0),
-                                     "Time Remaining"=character(0),
                                      "Kicktraq URL"=character(0))
     
     # put together the 'ending this week' data and dumping it to a file
     if (type %in% c('e','end','both')) {
         page <- startPage
         
+        print("Processing projects ending soon.")
+        
         # grab more data as long as we don't have enough!
         while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
+            print(paste("Page ",page))
             currentUrl <- paste0(baseUrl, 'end', pageMod, page)
-            endData <- rbind(endData, scrapeKicktraqPage(currentUrl))
+            endData <- rbind(endData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
+            Sys.sleep(sleeptime__)
         }
         
         # subset the data, because, ironically, now we'll have too much
@@ -252,15 +273,16 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     # put together the 'new this week' data and dumping it to a file
     if (type %in% c('n','new','both')) {
         page <- startPage
-        
+        print("Processing new projects.")
         # grab more data as long as we don't have enough!
-        while(nrow(newData) == 0 || min(newData$Project.Start) >= begDate - days(newWindow)) {
+        while(nrow(newData) == 0 || min(newData$Project.Start, na.rm = TRUE) >= begDate - days(newWindow)) {
+            print(paste("Page ",page))
             currentUrl <- paste0(baseUrl, 'new', pageMod, page)
-            newData <- rbind(newData, scrapeKicktraqPage(currentUrl))
+            newData <- rbind(newData, scrapeProjectsList(currentUrl))
             page <- page + 1
             
             # throw in some wait time so we don't bludgeon their server
-            Sys.sleep(1)
+            Sys.sleep(sleeptime__)
         }
         
         # subset the data, because, ironically, now we'll have too much
