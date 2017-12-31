@@ -20,6 +20,8 @@ parseStartDate <- function(asIsDate) {
     
     if (month(startDate)==12 && month(curDate)==1) {
         year(startDate) <- year(curDate) - 1
+    } else {
+        year(startDate) <- year(curDate)
     }
     
     return(startDate)
@@ -31,6 +33,8 @@ parseEndDate <- function(asIsDate) {
     
     if (month(endDate)==1 && month(curDate)==12) {
         year(endDate) <- year(curDate) + 1
+    } else {
+        year(endDate) <- year(curDate)
     }
     
     return(endDate)
