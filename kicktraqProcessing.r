@@ -10,6 +10,7 @@ library(magrittr)
 library(lubridate)
 library(R.utils)
 library(stringr)
+library(knitr)
 
 sleeptime__ <- 5
 
@@ -137,14 +138,6 @@ scrapeProjectsList <- function(url) {
                "Kicktraq URL"=ktURLs))
 }
 
-createPostHeader <- function(outputFile) {
-    cat("## What this is:\n\nThis is a weekly, curated listing of Kickstarter tabletop games projects",
-        "that are either:\n\n- **newly posted in the past 7 days**, or\n- **ending in the next 7 days (starting tomorrow)**",
-        "and have at least a fighting chance of being funded.\n\nAll board game projects meeting",
-        "those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
-        "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n", file = outputFile, append = FALSE)
-}
-
 createPostBody <- function(section, outputFile, data, sort = F) {
     section <- tolower(section)
     acceptableSections <- c('new','end')
@@ -182,23 +175,6 @@ createPostBody <- function(section, outputFile, data, sort = F) {
     }
     
 }
-    
-createPostFooter <- function(outputFile) {
-    cat("*****\n", file = outputFile, append = TRUE)
-    cat("Looking for more comprehensive Kickstarter gaming information? ",
-        "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist),",
-        "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/),", 
-        "or, of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n",
-        file = outputFile, append = TRUE)
-    cat("*****\n", file = outputFile, append = TRUE)
-    cat("## Footnotes\n", file = outputFile, append = TRUE)
-    cat("* `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", file = outputFile, append = TRUE)
-    cat("* `#lolwut` is reserved for projects that seem like trainwrecks. Check 'em out for amusement.\n", file = outputFile, append = TRUE)
-    cat("* `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n", file = outputFile, append = TRUE)
-    cat("* Did I miss something? Particularly stuff that might go in the Comments column? Let me know and I'll add it in.\n\n", file = outputFile, append = TRUE)
-    cat("****\n", file = outputFile, append = TRUE)
-    cat("[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.", file = outputFile, append = TRUE)
-}
 
 integerTest <- function(toTest){
     
@@ -209,7 +185,7 @@ integerTest <- function(toTest){
     }
 }
 
-createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
+createKsPost <- function(type="both", begDate = today(), outputFile="kspost.txt",
                            baseUrl="http://www.kicktraq.com/categories/games/tabletop%20games?sort=",
                            startPage=1, newWindow=7, endWindow=8, saveData = T) {
     
@@ -230,7 +206,15 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
     # we'll let read_html validate the url for us
     pageMod <- "&page="
     
-    createPostHeader(outputFile)
+    # open the file for writing and create the header for the post
+    sink(outputFile)
+    cat("## What this is:\n\n",
+        "This is a weekly, curated listing of Kickstarter tabletop games projects that are either:\n\n",
+        "- **newly posted in the past 7 days**, or\n",
+        "- **ending in the next 7 days (starting tomorrow)**",
+        "and have at least a fighting chance of being funded.\n\n",
+        "All board game projects meeting those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
+        "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n")
     
     # because we want to iteratively build a data frame, it's helpful to start with an
     # empty shell version of it such that we can write one test that is guaranteed to
@@ -292,7 +276,20 @@ createKsPost <- function(type="both", begDate = today(), outputFile="kspost.md",
         createPostBody('new', outputFile, newData, sort = T)
     }
     
-    createPostFooter(outputFile)
+    cat("*****\n",
+        "Looking for more comprehensive Kickstarter gaming information? ",
+        "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist), ",
+        "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/), or, ", 
+        "of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n",
+        "*****\n", 
+        "## Footnotes\n", 
+        "- `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", 
+        "- `#lolwut` is reserved for projects that seem like trainwrecks. Check 'em out for amusement.\n", 
+        "- `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n", 
+        "- Did I miss something? Particularly something **new in the last 7 days** or **ending in the next 7 days**? Let me know in the comments and I'll add it in.\n\n", 
+        "****\n", 
+        "[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.")
+    sink()
     
     return(list("end" = endData, "new" = newData))
 }
