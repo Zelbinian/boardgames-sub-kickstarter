@@ -111,7 +111,7 @@ scrapeProjectInfo <- function(ktURLs) {
                 "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
-scrapeProjectsList <- function(url, data) {
+fetchProjectsData <- function(url, data) {
   data_local <- data
   webdata <- read_html(url)
   logMessage(paste(url,"has been read."))
@@ -215,7 +215,7 @@ createKsPost <- function(begDate = today()) {
   while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
     logMessage(paste("Page", page, "of ending soon projects."))
     currentUrl <- paste0(baseUrl, 'end', pageMod, page)
-    endData <- scrapeProjectsList(currentUrl, endData)
+    endData <- fetchProjectsData(currentUrl, endData)
     page <- page + 1
     
     # throw in some wait time so we don't bludgeon their server
@@ -237,7 +237,7 @@ createKsPost <- function(begDate = today()) {
   while(nrow(newData) == 0 || min(newData$Project.Start, na.rm = TRUE) >= begDate - days(newWindow)) {
     logMessage(paste("Page", page, "of new projects."))
     currentUrl <- paste0(baseUrl, 'new', pageMod, page)
-    newData <- \scrapeProjectsList(currentUrl, newData)
+    newData <- fetchProjectsData(currentUrl, newData)
     page <- page + 1
     
     # throw in some wait time so we don't bludgeon their server
