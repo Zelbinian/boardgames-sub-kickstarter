@@ -62,7 +62,7 @@ scrapeProjectInfo <- function(ktURLs) {
           read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__ * 10
         )
         
-        cat(paste("Currently processing", url))
+        logMessage(paste("Currently processing", url))
         
         if(!is.null(projectPage)) break;
       }
@@ -78,7 +78,7 @@ scrapeProjectInfo <- function(ktURLs) {
         # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
             # yay! page exists! 
-            cat(" and it exists \n")
+            logMessage(" and it exists \n")
             
             projectPageInfo <- projectPage %>%  
                 html_node("#project-info-text") %>%   #selects the div with the project details in it
@@ -101,7 +101,7 @@ scrapeProjectInfo <- function(ktURLs) {
             endDates <- c(endDates, parseEndDate(datesStrs[2]))
             ksURLs <- c(ksURLs, thisKsUrl)
             
-            print(paste("There are now",length(ksURLs),"items processed."))
+            logMessage(paste("There are now",length(ksURLs),"items processed."))
         } 
         
         Sys.sleep(sleeptime__) # try not to hammer their server
