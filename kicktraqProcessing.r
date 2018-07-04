@@ -136,23 +136,10 @@ scrapeProjectsList <- function(url) {
                "Kicktraq URL"=ktURLs))
 }
 
-createPostBody <- function(section, outputFile, data, sort = F) {
-    section <- tolower(section)
-    acceptableSections <- c('new','end')
-    if(!(section %in% acceptableSections)) stop(paste(section,"is an invalid specifier."))
-    
-    # sorting data, if required
-    if(sort) data <- data[with(data, order(as.character(Title))),]
-    
-    # write the appropriate section header
-    if(section == 'new') {
-        cat("## New This Week\n", file = outputFile, append = TRUE)
-    } else {
-        cat("## Ending Soon\n", file = outputFile, append = TRUE)
-    }
+writePostTable <- function(data, kicktraq = F) {
     
     # posts a formatted version of the passed in data to the output file 
-    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n", file = outputFile, append = TRUE)
+    cat("Project Info|Status|Backers|Avg Pledge|Ending|Comments\n:--|:--|:--|:--|:--|:--\n")
     for(i in 1:nrow(data)) {
         with(data[i,],
              # to make it easy to read, each line below is a column in the table
@@ -160,16 +147,12 @@ createPostBody <- function(section, outputFile, data, sort = F) {
                 as.character(Funding.Percent),"|",
                 as.character(Backers),"|",
                 as.character(Average.Pledge),"|",
-                as.character(strftime(Project.End, format = "%m-%d")),"|",
-                sep = "", file = outputFile, append = TRUE)
+                as.character(strftime(Project.End, format = "%m-%d")),"|")
         )
         
-        if (section == 'end') {
-            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$Kicktraq.URL)),")", 
-                sep = "", file = outputFile, append = TRUE)
+        if (kicktraq) {
+            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$Kicktraq.URL)),")")
         }
-        
-        cat("\n", file = outputFile, append = TRUE)
     }
     
 }
@@ -200,7 +183,8 @@ createKsPost <- function(begDate = today()) {
       "- **ending in the next 7 days (starting tomorrow)**",
       "and have at least a fighting chance of being funded.\n\n",
       "All board game projects meeting those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
-      "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n")
+      "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n",
+      "## Ending Soon\n")
     
   # because we want to iteratively build a data frame, it's helpful to start with an
   # empty shell version of it such that we can write one test that is guaranteed to
@@ -237,7 +221,7 @@ createKsPost <- function(begDate = today()) {
   endData <- endData[endData$Project.End <= (begDate + days(endWindow)),]
   
   # now dump it to the file
-  createPostBody('end', outputFile, endData)
+  writePostTable(endData, kicktraq = T)
   
   # put together the 'new this week' data and dumping it to a file
   
@@ -257,9 +241,12 @@ createKsPost <- function(begDate = today()) {
   
   # subset the data, because, ironically, now we'll have too much
   newData <- newData[newData$Project.Start >= (begDate - days(newWindow)),]
+  
+  cat("\n*****\n",
+      "## New This Week\n")
     
   # now dump it to the file
-  createPostBody('new', outputFile, newData, sort = T)
+  writePostTable(newData, kicktraq = T) #SEND THIS DATA SORTED ALPHABETICALLY BY TITLE
   
   # write the post footer and then close the file stream
   cat("*****\n",
