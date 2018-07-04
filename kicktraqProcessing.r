@@ -10,7 +10,7 @@ library(magrittr)
 library(lubridate)
 library(R.utils)
 library(stringr)
-library(knitr)
+library(tidyverse)
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
@@ -111,29 +111,34 @@ scrapeProjectInfo <- function(ktURLs) {
                 "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
-scrapeProjectsList <- function(url) {
-    webdata <- read_html(url)
-    
-    # # The project details, annoyingly, are just a text blob, so need to parse them out
-    # prj_details <- webdata %>%                      #data source
-    #     html_nodes(".project-details") %>%   #selects the div with the project details in it
-    #     html_text() %>%                     #pulling the text out
-    #     strsplit('\n')                      #storing each peice of data separately
-    print("Page has been read.")
-    # this is the meaty function, the thing that actually processes the scraped data
-    ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
-    prj_info <- scrapeProjectInfo(ktURLs)
-    
-    return(data.frame("Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
-               "URL"=prj_info$url,
-               "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
-               "Backers"=prj_info$backers,
-               "Funding Amount"=prj_info$fundingAmt,
-               "Funding Percent"=prj_info$fundingPcnt,
-               "Average Pledge"=prj_info$avgPledge,
-               "Project Start"=prj_info$startDates,
-               "Project End"=prj_info$endDates,
-               "Kicktraq URL"=ktURLs))
+scrapeProjectsList <- function(url, data) {
+  data_local <- data
+  webdata <- read_html(url)
+  logMessage(paste(url,"has been read."))
+  
+  # # The project details, annoyingly, are just a text blob, so need to parse them out
+  # prj_details <- webdata %>%                      #data source
+  #     html_nodes(".project-details") %>%   #selects the div with the project details in it
+  #     html_text() %>%                     #pulling the text out
+  #     strsplit('\n')                      #storing each peice of data separately
+  
+  # this is the meaty function, the thing that actually processes the scraped data
+  ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
+  prj_info <- scrapeProjectInfo(ktURLs)
+  
+  add_row(data_local,
+          "Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
+          "URL"=prj_info$url,
+          "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
+          "Backers"=prj_info$backers,
+          "Funding Amount"=prj_info$fundingAmt,
+          "Funding Percent"=prj_info$fundingPcnt,
+          "Average Pledge"=prj_info$avgPledge,
+          "Project Start"=prj_info$startDates,
+          "Project End"=prj_info$endDates,
+          "Kicktraq URL"=ktURLs)
+  
+  return(data_local)
 }
 
 writePostTable <- function(data, kicktraq = F) {
@@ -189,7 +194,7 @@ createKsPost <- function(begDate = today()) {
   # because we want to iteratively build a data frame, it's helpful to start with an
   # empty shell version of it such that we can write one test that is guaranteed to
   # fail the first time
-  endData <- newData <- data.frame("Title"=character(0),
+  endData <- newData <- tibble("Title"=character(0),
                                    "URL"=character(0),
                                    "Description"=character(0),
                                    "Backers"=numeric(0),
@@ -210,7 +215,7 @@ createKsPost <- function(begDate = today()) {
   while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
     logMessage(paste("Page", page, "of ending soon projects."))
     currentUrl <- paste0(baseUrl, 'end', pageMod, page)
-    endData <- rbind(endData, scrapeProjectsList(currentUrl))
+    endData <- scrapeProjectsList(currentUrl, endData)
     page <- page + 1
     
     # throw in some wait time so we don't bludgeon their server
@@ -232,7 +237,7 @@ createKsPost <- function(begDate = today()) {
   while(nrow(newData) == 0 || min(newData$Project.Start, na.rm = TRUE) >= begDate - days(newWindow)) {
     logMessage(paste("Page", page, "of new projects."))
     currentUrl <- paste0(baseUrl, 'new', pageMod, page)
-    newData <- rbind(newData, scrapeProjectsList(currentUrl))
+    newData <- \scrapeProjectsList(currentUrl, newData)
     page <- page + 1
     
     # throw in some wait time so we don't bludgeon their server
