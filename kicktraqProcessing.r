@@ -10,7 +10,9 @@ library(magrittr)
 library(lubridate)
 library(R.utils)
 library(stringr)
-library(tidyverse)
+library(tibble)
+
+sleeptime__ <- 5
 
 # -------- functions -------------------------
 parseStartDate <- function(asIsDate) {
@@ -19,6 +21,8 @@ parseStartDate <- function(asIsDate) {
     
     if (month(startDate)==12 && month(curDate)==1) {
         year(startDate) <- year(curDate) - 1
+    } else {
+        year(startDate) <- year(curDate)
     }
     
     return(startDate)
@@ -30,6 +34,8 @@ parseEndDate <- function(asIsDate) {
     
     if (month(endDate)==1 && month(curDate)==12) {
         year(endDate) <- year(curDate) + 1
+    } else {
+        year(endDate) <- year(curDate)
     }
     
     return(endDate)
@@ -47,13 +53,13 @@ extractProjectInfo <- function(textblob, toExtract) {
 
 scrapeProjectInfo <- function(ktURLs) {
     
-    backers <- vector()
-    fundingPct <- vector()
-    fundingAmt <- vector()
-    avgPledge <- vector()
-    startDates <- as.Date(vector())
-    endDates <- as.Date(vector())   # yeah, I know
-    ksURLs <- vector()
+    backers <- integer(0)
+    fundingPct <- character(0)
+    fundingAmt <- character(0)
+    avgPledge <- character(0)
+    startDates <- ymd()
+    endDates <- ymd()
+    ksURLs <- character(0)
     
     for(url in ktURLs) {
       
@@ -78,7 +84,7 @@ scrapeProjectInfo <- function(ktURLs) {
         # one of the attempts to grab them yeilds an empty list.
         if (length(thisKsUrl) > 0) {
             # yay! page exists! 
-            logMessage(" and it exists \n")
+            logMessage("The page exists.")
             
             projectPageInfo <- projectPage %>%  
                 html_node("#project-info-text") %>%   #selects the div with the project details in it
@@ -88,7 +94,7 @@ scrapeProjectInfo <- function(ktURLs) {
                 trimws()                            # Trimming white space to make life easier later
             
             # adding new data to the vectors
-            backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:"))
+            backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:") %>% as.integer())
             fundingPct <- c(fundingPct, 
                             projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
             fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
@@ -112,7 +118,6 @@ scrapeProjectInfo <- function(ktURLs) {
 }
 
 fetchProjectsData <- function(url, data) {
-  data_local <- data
   webdata <- read_html(url)
   logMessage(paste(url,"has been read."))
   
@@ -126,7 +131,7 @@ fetchProjectsData <- function(url, data) {
   ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
   prj_info <- scrapeProjectInfo(ktURLs)
   
-  add_row(data_local,
+  add_row(data,
           "Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
           "URL"=prj_info$url,
           "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
@@ -136,9 +141,8 @@ fetchProjectsData <- function(url, data) {
           "Average Pledge"=prj_info$avgPledge,
           "Project Start"=prj_info$startDates,
           "Project End"=prj_info$endDates,
-          "Kicktraq URL"=ktURLs)
-  
-  return(data_local)
+          "Kicktraq URL"=ktURLs) %>% 
+      return()
 }
 
 writePostTable <- function(data, kicktraq = F) {
@@ -148,16 +152,18 @@ writePostTable <- function(data, kicktraq = F) {
     for(i in 1:nrow(data)) {
         with(data[i,],
              # to make it easy to read, each line below is a column in the table
-            cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(Funding.Amount),")*","|",
-                as.character(Funding.Percent),"|",
+            cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(`Funding Amount`),")*","|",
+                as.character(`Funding Percent`),"|",
                 as.character(Backers),"|",
-                as.character(Average.Pledge),"|",
-                as.character(strftime(Project.End, format = "%m-%d")),"|")
+                as.character(`Average Pledge`),"|",
+                as.character(strftime(`Project End`, format = "%m-%d")),"|")
         )
         
         if (kicktraq) {
-            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$Kicktraq.URL)),")")
+            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$`Kicktraq URL`)),")")
         }
+        
+        cat("\n")
     }
     
 }
@@ -171,8 +177,6 @@ logMessage <- function(message, logfile="kspostlog.txt") {
 createKsPost <- function(begDate = today()) {
   
   # settings w/ defaults
-  
-  sleeptime__ <- 5
   outputFile <-"kspost.txt"
   baseUrl <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
   startPage <- 1
@@ -201,8 +205,8 @@ createKsPost <- function(begDate = today()) {
                                    "Funding Amount"=character(0),
                                    "Funding Percent"=character(0),
                                    "Average Pledge"=character(0),
-                                   "Project Start"=numeric(0),
-                                   "Project End"=numeric(0),
+                                   "Project Start"=ymd(0),
+                                   "Project End"=ymd(0),
                                    "Kicktraq URL"=character(0))
   
   # put together the 'ending this week' data and dumping it to a file
@@ -212,8 +216,8 @@ createKsPost <- function(begDate = today()) {
   logMessage("Now processing projects ending soon")
   
   # grab more data as long as we don't have enough!
-  while(nrow(endData) == 0 || max(endData$Project.End, na.rm = TRUE) <= begDate + days(endWindow)) {
-    logMessage(paste("Page", page, "of ending soon projects."))
+  while(nrow(endData) == 0 || max(endData$`Project End`, na.rm = TRUE) <= begDate + days(endWindow)) {
+    logMessage(paste("Page", page, "of ending soon projects. Max date:",max(endData$`Project End`, na.rm = TRUE)))
     currentUrl <- paste0(baseUrl, 'end', pageMod, page)
     endData <- fetchProjectsData(currentUrl, endData)
     page <- page + 1
@@ -223,7 +227,7 @@ createKsPost <- function(begDate = today()) {
   }
   
   # subset the data, because, ironically, now we'll have too much
-  endData <- endData[endData$Project.End <= (begDate + days(endWindow)),]
+  endData <- endData[endData$`Project End` <= (begDate + days(endWindow)),]
   
   # now dump it to the file
   writePostTable(endData, kicktraq = T)
@@ -234,8 +238,8 @@ createKsPost <- function(begDate = today()) {
   logMessage("Processing new projects.")
   
   # grab more data as long as we don't have enough!
-  while(nrow(newData) == 0 || min(newData$Project.Start, na.rm = TRUE) >= begDate - days(newWindow)) {
-    logMessage(paste("Page", page, "of new projects."))
+  while(nrow(newData) == 0 || min(newData$`Project Start`, na.rm = TRUE) >= begDate - days(newWindow)) {
+    logMessage(paste("Page", page, "of new projects. Min date:",min(newData$`Project Start`, na.rm = TRUE)))
     currentUrl <- paste0(baseUrl, 'new', pageMod, page)
     newData <- fetchProjectsData(currentUrl, newData)
     page <- page + 1
