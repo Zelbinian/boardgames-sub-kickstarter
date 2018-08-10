@@ -227,7 +227,8 @@ createKsPost <- function(begDate = today()) {
   }
   
   # subset the data, because, ironically, now we'll have too much
-  endData <- endData[endData$`Project End` <= (begDate + days(endWindow)),]
+  endData <- endData %>% filter(`Project End` <= (begDate + days(endWindow)))
+  #endData <- endData[endData$`Project End` <= (begDate + days(endWindow)),]
   
   # now dump it to the file
   writePostTable(endData, kicktraq = T)
@@ -249,7 +250,8 @@ createKsPost <- function(begDate = today()) {
   }
   
   # subset the data, because, ironically, now we'll have too much
-  newData <- newData[newData$Project.Start >= (begDate - days(newWindow)),]
+  newData <- newData %>% filter(`Project Start` >= (begDate - days(newWindow)))
+  #newData <- newData[newData$Project.Start >= (begDate - days(newWindow)),]
   
   cat("\n*****\n",
       "## New This Week\n")
