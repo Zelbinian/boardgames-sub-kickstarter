@@ -156,7 +156,7 @@ writePostTable <- function(data, kicktraq = F) {
                 as.character(`Funding Percent`),"|",
                 as.character(Backers),"|",
                 as.character(`Average Pledge`),"|",
-                as.character(strftime(`Project End`, format = "%m-%d")),"|")
+                as.character(strftime(`Project End`, format = "%m-%d")),"|", sep="")
         )
         
         if (kicktraq) {
