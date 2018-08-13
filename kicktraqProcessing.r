@@ -249,13 +249,13 @@ createKsPost <- function(begDate = today()) {
   }
   
   # subset the data, because, ironically, now we'll have too much
-  newData <- newData %>% filter(`Project Start` >= (begDate - days(newWindow)))
+  newData <- newData %>% filter(`Project Start` >= (begDate - days(newWindow))) %>% arrange(Title)
   
   cat("\n*****\n",
       "## New This Week\n")
     
   # now dump it to the file
-  writePostTable(newData, kicktraq = T) #SEND THIS DATA SORTED ALPHABETICALLY BY TITLE
+  writePostTable(newData, kicktraq = T) 
   
   # write the post footer and then close the file stream
   cat("*****\n",
