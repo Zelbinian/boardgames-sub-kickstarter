@@ -134,7 +134,8 @@ fetchProjectsData <- function(url, data) {
   add_row(data,
           "Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
           "URL"=prj_info$url,
-          "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text(),
+          "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text() %>%
+              gsub("[\r\n]", "", .),
           "Backers"=prj_info$backers,
           "Funding Amount"=prj_info$fundingAmt,
           "Funding Percent"=prj_info$fundingPcnt,
