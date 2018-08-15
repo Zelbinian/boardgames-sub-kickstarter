@@ -254,10 +254,10 @@ createKsPost <- function(begDate = today()) {
   newData <- newData %>% filter(`Project Start` >= (begDate - days(newWindow))) %>% arrange(Title)
   
   cat("\n*****\n",
-      "## New This Week\n")
+      "## New This Week\n", sep="")
     
   # now dump it to the file
-  writePostTable(newData, kicktraq = T) 
+  writePostTable(newData, kicktraq = F) 
   
   # write the post footer and then close the file stream
   cat("*****\n",
