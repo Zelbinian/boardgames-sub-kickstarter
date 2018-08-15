@@ -1,7 +1,7 @@
 # -------- setup procedures ------------------
 
 # checking for required packages, installing if necessary
-reqPackages <- c("rvest", "magrittr", "lubridate", "stringr", "tibble")
+reqPackages <- c("rvest", "magrittr", "lubridate", "stringr", "tibble", "dplyr")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
@@ -11,6 +11,7 @@ library(lubridate)
 library(R.utils)
 library(stringr)
 library(tibble)
+library(dplyr)
 
 sleeptime__ <- 5
 
