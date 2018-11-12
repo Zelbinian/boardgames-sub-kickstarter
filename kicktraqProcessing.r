@@ -165,7 +165,7 @@ writePostTable <- function(data, kicktraq = F) {
             cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$`Kicktraq URL`)),")")
         }
         
-        cat("\n")
+        cat("\n", sep="")
     }
     
 }
@@ -195,7 +195,7 @@ createKsPost <- function(begDate = today()) {
       "and have at least a fighting chance of being funded.\n\n",
       "All board game projects meeting those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
       "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n",
-      "## Ending Soon\n")
+      "## Ending Soon\n", sep="")
     
   # because we want to iteratively build a data frame, it's helpful to start with an
   # empty shell version of it such that we can write one test that is guaranteed to
@@ -264,15 +264,18 @@ createKsPost <- function(begDate = today()) {
       "Looking for more comprehensive Kickstarter gaming information? ",
       "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist), ",
       "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/), or, ", 
-      "of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n",
+      "of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n\n",
+      "I also have a new [announced Kickstarter board game calendar](https://airtable.com/shrioIkpOb33jjrcw) which is usually up to date. (Usually.) ", 
+      "(Get it via [ical subscription](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en), if you prefer.)\n\n",
       "*****\n", 
       "## Footnotes\n", 
       "- `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", 
       "- `#lolwut` is reserved for projects that seem like trainwrecks. Check 'em out for amusement.\n", 
-      "- `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n", 
+      "- `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n",
+      "- `#New Ed` tags highlight a new edition of a previously-released game.",
       "- Did I miss something? Particularly something **new in the last 7 days** or **ending in the next 7 days**? Let me know in the comments and I'll add it in.\n\n", 
       "****\n", 
-      "[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.")
+      "[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.", sep="")
   sink()
   
   return(list("end" = endData, "new" = newData))
