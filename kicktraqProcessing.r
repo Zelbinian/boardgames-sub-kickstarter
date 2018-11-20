@@ -10,9 +10,7 @@ library(rvest)
 library(magrittr)
 library(lubridate)
 library(R.utils)
-library(stringr)
-library(tibble)
-library(dplyr)
+library(tidyverse)
 
 sleeptime__ <- 5
 
