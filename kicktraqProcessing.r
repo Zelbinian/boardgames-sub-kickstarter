@@ -5,6 +5,7 @@ reqPackages <- c("rvest", "magrittr", "lubridate", "stringr", "tibble", "dplyr")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
+library(httr)
 library(rvest)
 library(magrittr)
 library(lubridate)
@@ -53,73 +54,85 @@ extractProjectInfo <- function(textblob, toExtract) {
 }
 
 scrapeProjectInfo <- function(ktURLs) {
+  
+  backers <- integer(0)
+  fundingPct <- character(0)
+  fundingAmt <- character(0)
+  avgPledge <- character(0)
+  startDates <- ymd()
+  endDates <- ymd()
+  ksURLs <- character(0)
+  
+  for(url in ktURLs) {
     
-    backers <- integer(0)
-    fundingPct <- character(0)
-    fundingAmt <- character(0)
-    avgPledge <- character(0)
-    startDates <- ymd()
-    endDates <- ymd()
-    ksURLs <- character(0)
+    ktResp <- RETRY(verb = "GET",
+                    url = url,
+                    body = FALSE,
+                    times = 5) 
     
-    for(url in ktURLs) {
+    # if we got a good response, keep going, otherwise harmlessly return the empty lists
+    
+    if (ktResp$status_code == 200) {
       
-      repeat{
-        projectPage <- withTimeout(
-          read_html(paste0("http://www.kicktraq.com",url)), timeout = sleeptime__ * 10
-        )
+      projectPage <- content(ktResp)
+      
+      # first, grab the url for the actual Kickstarter project
+      thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
+      
+      # On occasion, the project page does disappear between grabbing the reference to
+      # it on the project listing and trying to access it directly. It's bizarre.
+      # When this happens, Kicktraq does not return a 404. Instead they generate
+      # some dynamic placeholder page. These placeholder pages have none of the 
+      # elements we're looking for, so the way we figure out if this happens is if
+      # one of the attempts to grab them yeilds an empty list.
+      if (length(thisKsUrl) > 0) {
+        # yay! page exists! 
+        logMessage("The page exists.")
         
-        logMessage(paste("Currently processing", url))
+        projectPageInfo <- projectPage %>%  
+          html_node("#project-info-text") %>%   #selects the div with the project details in it
+          html_text() %>%                     #pulling the text out
+          strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
+          unlist() %>%
+          trimws()                            # Trimming white space to make life easier later
         
-        if(!is.null(projectPage)) break;
-      }
+        # adding new data to the vectors
+        backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:") %>% as.integer())
+        fundingPct <- c(fundingPct, 
+                        projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
+        fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
+        avgPledge <- c(avgPledge, extractProjectInfo(projectPageInfo, "Average Pledge Per Backer:"))
         
-        # first, grab the url for the actual Kickstarter project
-        thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
+        # the dates are in a unique format so the processing here is a bit special and 
+        # we need a helper variable and some helper functions
+        datesStrs <- extractProjectInfo(projectPageInfo, "Dates:") %>% strsplit(" -> ") %>% unlist()
+        startDates <- c(startDates, parseStartDate(datesStrs[1]))
+        endDates <- c(endDates, parseEndDate(datesStrs[2]))
+        ksURLs <- c(ksURLs, thisKsUrl)
         
-        # On occasion, the project page does disappear between grabbing the reference to
-        # it on the project listing and trying to access it directly. It's bizarre.
-        # When this happens, Kicktraq does not return a 404. Instead they generate
-        # some dynamic placeholder page. These placeholder pages have none of the 
-        # elements we're looking for, so the way we figure out if this happens is if
-        # one of the attempts to grab them yeilds an empty list.
-        if (length(thisKsUrl) > 0) {
-            # yay! page exists! 
-            logMessage("The page exists.")
-            
-            projectPageInfo <- projectPage %>%  
-                html_node("#project-info-text") %>%   #selects the div with the project details in it
-                html_text() %>%                     #pulling the text out
-                strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
-                unlist() %>%
-                trimws()                            # Trimming white space to make life easier later
-            
-            # adding new data to the vectors
-            backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:") %>% as.integer())
-            fundingPct <- c(fundingPct, 
-                            projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
-            fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
-            avgPledge <- c(avgPledge, extractProjectInfo(projectPageInfo, "Average Pledge Per Backer:"))
-            
-            # the dates are in a unique format so the processing here is a bit special and 
-            # we need a helper variable and some helper functions
-            datesStrs <- extractProjectInfo(projectPageInfo, "Dates:") %>% strsplit(" -> ") %>% unlist()
-            startDates <- c(startDates, parseStartDate(datesStrs[1]))
-            endDates <- c(endDates, parseEndDate(datesStrs[2]))
-            ksURLs <- c(ksURLs, thisKsUrl)
-            
-            logMessage(paste("There are now",length(ksURLs),"items processed."))
-        } 
-        
-        Sys.sleep(sleeptime__) # try not to hammer their server
+        logMessage(paste("There are now",length(ksURLs),"items processed."))
+      } 
+    } else {
+      message_for_status(ktResp, paste("retrieve",url,"from Kicktraq, processing skipped."))
     }
     
-    return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
-                "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
+    Sys.sleep(sleeptime__) # try not to hammer their server
+  }
+  
+  return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
+              "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
 }
 
 fetchProjectsData <- function(url, data) {
-  webdata <- read_html(url)
+  ktResp <- RETRY(verb = "GET",
+                   url = url,
+                   body = FALSE,
+                   times = 5)
+  
+  stop_for_status(x = ktResp,                       # If we don't get a 200, stop execution
+                  task = paste("read",url))
+  
+  webdata <- content(url)
   logMessage(paste(url,"has been read."))
   
   # # The project details, annoyingly, are just a text blob, so need to parse them out
