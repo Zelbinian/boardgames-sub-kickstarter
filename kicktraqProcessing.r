@@ -64,7 +64,7 @@ scrapeProjectInfo <- function(ktURLs) {
   for(url in ktURLs) {
     
     ktResp <- RETRY(verb = "GET",
-                    url = url,
+                    url = paste0("https://www.kicktraq.com",url),
                     body = FALSE,
                     times = 5) 
     
@@ -130,7 +130,7 @@ fetchProjectsData <- function(url, data) {
   stop_for_status(x = ktResp,                       # If we don't get a 200, stop execution
                   task = paste("read",url))
   
-  webdata <- content(url)
+  webdata <- content(ktResp)
   logMessage(paste(url,"has been read."))
   
   # # The project details, annoyingly, are just a text blob, so need to parse them out
