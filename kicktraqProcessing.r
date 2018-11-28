@@ -381,9 +381,6 @@ createKsPost <- function(begDate = today()) {
   #   # throw in some wait time so we don't bludgeon their server
   #   Sys.sleep(sleeptime__)
   # }
-  # 
-  # # subset the data, because, ironically, now we'll have too much
-  newData <- atData %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name)
 
   cat("\n*****\n",
       "## New This Week\n", sep="")
