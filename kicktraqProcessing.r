@@ -14,7 +14,7 @@ library(tibble)
 library(stringr)
 library(dplyr)
 
-sleeptime__ <- 5
+# sleeptime__ <- 5
 
 # -------- functions -------------------------
 # parseStartDate <- function(asIsDate) {
@@ -314,9 +314,9 @@ writePostTable <- function(data, kicktraq = F) {
     
 }
 
-logMessage <- function(message, logfile="kspostlog.txt") {
-  paste(date(),">",message) %>% cat(file = logfile, sep = "\n", append = TRUE)
-}
+# logMessage <- function(message, logfile="kspostlog.txt") {
+#   paste(date(),">",message) %>% cat(file = logfile, sep = "\n", append = TRUE)
+# }
 
 # this function is effectively the script
 
