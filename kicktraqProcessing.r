@@ -6,7 +6,6 @@ newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
 library(httr)
-library(rvest)
 library(magrittr)
 library(lubridate)
 library(R.utils)
@@ -271,16 +270,17 @@ logMessage <- function(message, logfile="kspostlog.txt") {
 
 createKsPost <- function(begDate = today()) {
   
-  # settings w/ defaults
-  outputFile <-"kspost.txt"
+  # gather the data
+  atData <- queryAirtable()
+  
   # baseUrl <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
   # startPage <- 1
-  # newWindow <- 7 # these are the number of days from today to look for games
-  # endWindow <- 8 # end window is beyond 7 just to make sure everything is captured
+  endInterval <- interval(begDate + days(1), begDate + weeks(1)) # the "ending soon" list consists of projects that will end within 7 days after the posting date of the list
+  newInterval <- interval(begDate - weeks(1), begDate - days(1)) # the "new" list consists of projects with startdates within the 7 days prior to the posting date of the list
   # pageMod <- "&page="
     
   # open the file for writing and create the header for the post
-  sink(outputFile)
+  sink("kspost.txt")
   cat("## What this is:\n\n",
       "This is a weekly, curated listing of Kickstarter tabletop games projects that are either:\n\n",
       "- **newly posted in the past 7 days**, or\n",
@@ -293,16 +293,16 @@ createKsPost <- function(begDate = today()) {
   # because we want to iteratively build a data frame, it's helpful to start with an
   # empty shell version of it such that we can write one test that is guaranteed to
   # fail the first time
-  endData <- newData <- tibble("Title"=character(0),
-                                   "URL"=character(0),
-                                   "Description"=character(0),
-                                   "Backers"=numeric(0),
-                                   "Funding Amount"=character(0),
-                                   "Funding Percent"=character(0),
-                                   "Average Pledge"=character(0),
-                                   "Project Start"=ymd(0),
-                                   "Project End"=ymd(0),
-                                   "Kicktraq URL"=character(0))
+  # endData <- newData <- tibble("Title"=character(0),
+  #                                  "URL"=character(0),
+  #                                  "Description"=character(0),
+  #                                  "Backers"=numeric(0),
+  #                                  "Funding Amount"=character(0),
+  #                                  "Funding Percent"=character(0),
+  #                                  "Average Pledge"=character(0),
+  #                                  "Project Start"=ymd(0),
+  #                                  "Project End"=ymd(0),
+  #                                  "Kicktraq URL"=character(0))
   
   # put together the 'ending this week' data and dumping it to a file
   
@@ -321,16 +321,9 @@ createKsPost <- function(begDate = today()) {
   #   Sys.sleep(sleeptime__)
   # }
   
-  # subset the data, because, ironically, now we'll have too much
-  endData <- endData %>% filter(`Project End` <= (begDate + days(endWindow)))
-  
-  # now dump it to the file
-  writePostTable(endData, kicktraq = T)
-  
-  # put together the 'new this week' data and dumping it to a file
-  
-  page <- startPage
-  logMessage("Processing new projects.")
+  # write the projects that end within the endInterval out to the file in Markdown formatm in chronological order
+  writePostTable(data = atData %>% filter(`End Date` %within% endInterval) %>% arrange(`End Date`), 
+                 kicktraq = T)
   
   # grab more data as long as we don't have enough!
   # while(nrow(newData) == 0 || min(newData$`Project Start`, na.rm = TRUE) >= begDate - days(newWindow)) {
@@ -344,13 +337,14 @@ createKsPost <- function(begDate = today()) {
   # }
   # 
   # # subset the data, because, ironically, now we'll have too much
-  # newData <- newData %>% filter(`Project Start` >= (begDate - days(newWindow))) %>% arrange(Title)
-  # 
+  newData <- atData %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name)
+
   cat("\n*****\n",
       "## New This Week\n", sep="")
     
-  # now dump it to the file
-  writePostTable(newData, kicktraq = F) 
+  # write the projects that launched within the newInterval out to the file in Markdown format, in alphabetical order
+  writePostTable(data = atData %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name),
+                 kicktraq = F) 
   
   # write the post footer and then close the file stream
   cat("*****\n",
