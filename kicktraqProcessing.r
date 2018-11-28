@@ -264,7 +264,7 @@ writePostTable <- function(data, kicktraq = F) {
                             curRecord$Description,
                             " // *Has raised ",curRecord$`Current Funding`, " so far.",
                             ifelse(curRecord$Funded == TRUE, 
-                                   paste0("* **",intToUtf8("9745"), "**"), # if funded, add a neat little checkmark
+                                   paste0("* **☑**"), # if funded, add a neat little checkmark
                                    paste0(" (~", curRecord$`Funding Percent`, "%)*"))) # if not display percentage
       
       # comments are too complicated to attempt in-place in a cat statement, this will stitch together a comment string
@@ -302,12 +302,6 @@ writePostTable <- function(data, kicktraq = F) {
           strftime(curRecord$`End Date`, format = "%b %d"),                       # Ends
           paste(comments, collapse = ' '),                                        # Comments
           sep="|")
-        
-        if (kicktraq) {
-            cat("|[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$`Kicktraq URL`)),")")
-        } else {
-          
-        }
         
         cat("\n", sep="")
     }
