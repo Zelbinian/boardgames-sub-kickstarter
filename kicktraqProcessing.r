@@ -1,7 +1,7 @@
 # -------- setup procedures ------------------
 
 # checking for required packages, installing if necessary
-reqPackages <- c("httr", "rvest", "magrittr", "lubridate", "stringr", "tibble", "dplyr")
+reqPackages <- c("httr", "rvest", "magrittr", "lubridate", "stringr", "tibble", "dplyr", "jsonlite")
 newPackages <- reqPackages[!(reqPackages %in% installed.packages()[,"Package"])]
 if(length(newPackages)) install.packages(newPackages)
 
@@ -9,6 +9,7 @@ library(httr)
 library(magrittr)
 library(lubridate)
 library(R.utils)
+library(jsonlite)
 library(tibble)
 library(stringr)
 library(dplyr)
@@ -211,10 +212,14 @@ queryAirtable <- function(viewChoice = "Active Kickstarters", apiKey) {
       atJSON$records$fields$`Total Funding` <- NA
     }
     
+    if(is.null(atJSON$records$fields$Metadata)) {
+      atJSON$records$fields$Metadata <- NA
+    }
+    
     atData %<>% add_row("ID"=atJSON$records$id, 
                         "Name"=atJSON$records$fields$Name,
                         "Description"=atJSON$records$fields$Description,
-                        "Metadata"=ifelse(is.null(atJSON$records$fields$Metadata), NA, atJSON$records$fields$Metadata),
+                        "Metadata"=atJSON$records$fields$Metadata,
                         "Campaign Link"=atJSON$records$fields$`Campaign Link`,
                         "BGG Link"=atJSON$records$fields$`BGG Link`,
                         "Launch Date"=atJSON$records$fields$`Launch Date` %>% ymd(),
@@ -238,23 +243,70 @@ queryAirtable <- function(viewChoice = "Active Kickstarters", apiKey) {
   return(atData)
 }
 
+# produces "hashtags" from a vector of strings, dolled up in markdown code formatting 
+hashtagify <- function(x) {
+  
+  x %<>% tolower() %>% gsub(" ", "", .) %>% paste0("`#",.,"`") %>% paste(., collapse = " ")
+  
+  return(x)
+}
+
 writePostTable <- function(data, kicktraq = F) {
     
     # posts a formatted version of the passed in data to the output file 
     cat("Project Info|Players|Backers|Min / Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--\n")
   
     for(i in 1:nrow(data)) {
-        with(data[i,],
-             # to make it easy to read, each line below is a column in the table
-            cat("**[",as.character(Title),"](",as.character(URL),")** ",as.character(Description)," *(Has currently earned ",as.character(`Funding Amount`),")*","|",
-                as.character(`Funding Percent`),"|",
-                as.character(Backers),"|",
-                as.character(`Average Pledge`),"|",
-                as.character(strftime(`Project End`, format = "%m-%d")),"|", sep="")
-        )
+      curRecord <- data[i,]
+        
+      # Project info is the most complicated column as it's calculated from many columns from the source data
+      projectInfo <- paste0("**[",curRecord$Name,"](",curRecord$`Campaign Link`,")** ",
+                            curRecord$Description,
+                            " // *Has raised ",curRecord$`Current Funding`, " so far.",
+                            ifelse(curRecord$Funded == TRUE, 
+                                   paste0("* **",intToUtf8("9745"), "**"), # if funded, add a neat little checkmark
+                                   paste0(" (~", curRecord$`Funding Percent`, "%)*"))) # if not display percentage
+      
+      # comments are too complicated to attempt in-place in a cat statement, this will stitch together a comment string
+      # if certain conditions are met
+      comments <- ""
+      
+      if (kicktraq) {
+        comments <- c(comments, 
+                      paste0("[kicktraq](",curRecord$`Campaign Link` %>% sub("starter", "traq", .), ")"))
+      }
+      
+      if(!is.na(curRecord$`BGG Link`)) {
+        comments <- c(comments, 
+                      paste0("[bgg](",curRecord$`BGG Link`, ")"))
+      }
+      
+      if(!is.na(curRecord$Metadata)) {
+        # unlist
+        metadata <- curRecord$Metadata %>% unlist() 
+        # check if null
+        if (!is.null(metadata)) {
+          
+        # for each element in the vector, hashtagify
+        comments <- c(comments, hashtagify(metadata))
+        }
+      }
+        
+      # to make it easy to read, each line below is a column in the table
+      cat(projectInfo,                                                            # Project Info                          
+          paste(ifelse(is.na(curRecord$`Min Players`), "?", curRecord$`Min Players`), 
+                ifelse(is.na(curRecord$`Max Players`), "?", curRecord$`Max Players`), 
+                sep = " - "),                                                     # Players
+          curRecord$Backers,                                                      # Backers
+          paste0("$", curRecord$`Min Pledge`, " / ",curRecord$`Avg Pledge`),      # Pledges
+          strftime(curRecord$`End Date`, format = "%b %d"),                       # Ends
+          paste(comments, collapse = ' '),                                        # Comments
+          sep="|")
         
         if (kicktraq) {
-            cat("[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$`Kicktraq URL`)),")")
+            cat("|[kicktraq](",as.character(paste0("http://www.kicktraq.com",data[i,]$`Kicktraq URL`)),")")
+        } else {
+          
         }
         
         cat("\n", sep="")
@@ -322,7 +374,7 @@ createKsPost <- function(begDate = today()) {
   # }
   
   # write the projects that end within the endInterval out to the file in Markdown formatm in chronological order
-  writePostTable(data = atData %>% filter(`End Date` %within% endInterval) %>% arrange(`End Date`), 
+  writePostTable(data = atData %>% filter(`End Date` %within% endInterval, `Funding Percent` >= 35) %>% arrange(`End Date`), 
                  kicktraq = T)
   
   # grab more data as long as we don't have enough!
