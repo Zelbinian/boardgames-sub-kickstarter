@@ -160,7 +160,7 @@ library(dplyr)
 #       return()
 # }
 
-queryAirtable <- function(viewChoice = "Active Kickstarters", apiKey) {
+queryAirtable <- function(viewChoice = "", apiKey) {
   
   # building a blank Tibble to add rows to later
   atData <- tibble("ID"=character(),  
@@ -316,10 +316,7 @@ writePostTable <- function(data, kicktraq = F) {
 
 # this function is effectively the script
 
-createKsPost <- function(begDate = today()) {
-  
-  # gather the data
-  atData <- queryAirtable()
+createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   
   # baseUrl <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
   # startPage <- 1
@@ -328,7 +325,7 @@ createKsPost <- function(begDate = today()) {
   # pageMod <- "&page="
     
   # open the file for writing and create the header for the post
-  sink("kspost.txt")
+  sink(outputFile)
   cat("## What this is:\n\n",
       "This is a weekly, curated listing of Kickstarter tabletop games projects that are either:\n\n",
       "- **newly posted in the past 7 days**, or\n",
@@ -414,10 +411,13 @@ createKsPost <- function(begDate = today()) {
       "These lists take time and money to put together. Not a lot, but a little.", 
       " If you enjoy them, maybe [toss me a buck](https://www.paypal.me/Zelbinian/1) now and then. 50% of after-expenses costs will be",
       " forwarded along to the [Jack Vasel Memorial Fund.](http://www.jackvasel.org/),\n\n",
-      "Alternatively, [signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via that referral link",
+      "[Signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via my referral link",
       " can help, too. Plus, it's swell!", 
       sep="")
   sink()
   
   return(atData)
 }
+
+# gather the data
+atData <- queryAirtable("Data Entry", ) %>% createKsPost()
