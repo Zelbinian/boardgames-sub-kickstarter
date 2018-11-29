@@ -264,9 +264,9 @@ fundingPossible <- function(fundingAmount, endDate, startDate = today(), thMax =
 writePostTable <- function(data, kicktraq = F) {
     
     # posts a formatted version of the passed in data to the output file 
-    cat("Project Info|Players|Backers|Min / Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--\n")
+    writeLines("Project Info|Players|Backers|Min / Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--", outputFile, useBytes = T)
   
-    checkmark <- intToUtf8("9745")
+    checkmark <- "\u2611"
   
     for(i in 1:nrow(data)) {
       curRecord <- data[i,]
@@ -305,7 +305,7 @@ writePostTable <- function(data, kicktraq = F) {
       }
         
       # to make it easy to read, each line below is a column in the table
-      cat(projectInfo,                                                            # Project Info                          
+      paste(projectInfo,                                                            # Project Info                          
           paste(ifelse(is.na(curRecord$`Min Players`), "?", curRecord$`Min Players`), 
                 ifelse(is.na(curRecord$`Max Players`), "?", curRecord$`Max Players`), 
                 sep = " - "),                                                     # Players
@@ -313,9 +313,7 @@ writePostTable <- function(data, kicktraq = F) {
           paste0("$", curRecord$`Min Pledge`, " / ",curRecord$`Avg Pledge`),      # Pledges
           strftime(curRecord$`End Date`, format = "%b %d"),                       # Ends
           paste(comments, collapse = ' '),                                        # Comments
-          sep="|")
-        
-        cat("\n", sep="")
+          sep="|") %>% writeLines(outputFile, useBytes = T)
     }
     
 }
@@ -326,24 +324,23 @@ writePostTable <- function(data, kicktraq = F) {
 
 # this function is effectively the script
 
-createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
+createKsPost <- function(data, begDate = today()) {
   
   # baseUrl <- "http://www.kicktraq.com/categories/games/tabletop%20games?sort="
   # startPage <- 1
   endInterval <- interval(begDate + days(1), begDate + weeks(1)) # the "ending soon" list consists of projects that will end within 7 days after the posting date of the list
   newInterval <- interval(begDate - weeks(1), begDate - days(1)) # the "new" list consists of projects with startdates within the 7 days prior to the posting date of the list
   # pageMod <- "&page="
-    
-  # open the file for writing and create the header for the post
-  sink(outputFile)
-  cat("## What this is:\n\n",
+
+  paste("## What this is:\n\n",
       "This is a weekly, curated listing of Kickstarter board game projects that are either:\n\n",
       "- **newly posted in the past 7 days**, or\n",
       "- **ending in the next 7 days (starting ", strftime(begDate + days(1), format = "%b %d"), ")**",
       " and have at least a fighting chance of being funded.\n\n",
       "All board game projects meeting those criteria will automatically be included, **no need to ask.** (The occasional non-board game project may also sneak in!)\n\n",
       "Expect new lists each Sunday sometime between midnight and noon PST.\n*****\n",
-      "## Ending Soon\n", sep="")
+      "## Ending Soon", 
+      sep="") %>% writeLines(outputFile, useBytes = T)
     
   # because we want to iteratively build a data frame, it's helpful to start with an
   # empty shell version of it such that we can write one test that is guaranteed to
@@ -391,14 +388,14 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   #   Sys.sleep(sleeptime__)
   # }
 
-  cat("## New This Week\n", sep="")
+  writeLines("## New This Week", outputFile, useBytes = T)
     
   # write the projects that launched within the newInterval out to the file in Markdown format, in alphabetical order
   writePostTable(data = data %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name),
                  kicktraq = F) 
   
   # write the post footer and then close the file stream
-  cat("## Need moar Kickstarter goodness?\n",
+  paste("## Need moar Kickstarter goodness?\n",
       "Check out... \n\n",
       "- My [Calendar of Announced Kickstarters](https://airtable.com/shrioIkpOb33jjrcw)", 
       " ([Also available in iCal flavor](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en))\n",
@@ -417,11 +414,14 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
       " forwarded along to the [Jack Vasel Memorial Fund](http://www.jackvasel.org/).\n\n",
       "[Signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via my referral link",
       " can help, too. Plus, it's swell!", 
-      sep="")
-  sink()
+      sep="") %>% writeLines(outputFile, useBytes = T)
   
   return(data)
 }
 
-# gather the data
-atData <- queryAirtable("Data Entry", "") %>% createKsPost()
+# open the connection
+outputFile <- file("kspost.txt", open = "w+", encoding = "native.enc")
+
+# gather data , write out and close the connection
+tryCatch(atData <- queryAirtable("Data Entry", "") %>% createKsPost(),
+         finally = close(outputFile))
