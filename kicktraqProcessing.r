@@ -327,12 +327,12 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   # open the file for writing and create the header for the post
   sink(outputFile)
   cat("## What this is:\n\n",
-      "This is a weekly, curated listing of Kickstarter tabletop games projects that are either:\n\n",
+      "This is a weekly, curated listing of Kickstarter board game projects that are either:\n\n",
       "- **newly posted in the past 7 days**, or\n",
-      "- **ending in the next 7 days (starting tomorrow)**",
-      "and have at least a fighting chance of being funded.\n\n",
-      "All board game projects meeting those criteria will automatically be included, no need to ask. (But the occasional non-board game project may also sneak in!)\n\n",
-      "Expect new lists each Sunday sometime between 12:00am and 12:00pm PST.\n*****\n",
+      "- **ending in the next 7 days (starting tomorrow, ", strftime(begDate, format = "%b %d"), ")**",
+      " and have at least a fighting chance of being funded.\n\n",
+      "All board game projects meeting those criteria will automatically be included, **no need to ask.** (The occasional non-board game project may also sneak in!)\n\n",
+      "Expect new lists each Sunday sometime between midnight and noon PST.\n*****\n",
       "## Ending Soon\n", sep="")
     
   # because we want to iteratively build a data frame, it's helpful to start with an
@@ -381,36 +381,30 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   #   Sys.sleep(sleeptime__)
   # }
 
-  cat("\n*****\n",
-      "## New This Week\n", sep="")
+  cat("## New This Week\n", sep="")
     
   # write the projects that launched within the newInterval out to the file in Markdown format, in alphabetical order
   writePostTable(data = data %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name),
                  kicktraq = F) 
   
   # write the post footer and then close the file stream
-  cat("*****\n",
-      "## Need moar Kickstarter goodness?\n",
+  cat("## Need moar Kickstarter goodness?\n",
       "Check out... \n\n",
       "- My [Calendar of Announced Kickstarters](https://airtable.com/shrioIkpOb33jjrcw)", 
-      " ([Also avail in iCal flavor](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en))\n",
-      "- My interactive Airtable view of [all active board game kickstarter campaigns](https://airtable.com/shrL0m86v0xDjRKbe).\n",
+      " ([Also available in iCal flavor](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en))\n",
+      "- My interactive AirTable view of [all active board game kickstarter campaigns](https://airtable.com/shrL0m86v0xDjRKbe).\n",
       "- BoardGameGeek's variety of [Kickstarter-oriented Geeklists](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist)\n",
-      "- [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/)\n", 
-      "of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n\n",
-      "*****\n", 
+      "- [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/)\n\n",
       "## Footnotes\n", 
       "- `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", 
       "- `#lolwut` is reserved for projects that seem like copycat games or campaigns put together with little thought. Check 'em out for amusement.\n", 
       "- `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n",
-      "- `#newedition` tags highlight a new edition of a previously-released game.",
       "- Did I miss something? Particularly something **new in the last 7 days** or **ending in the next 7 days**?", 
       " Let me know in the comments and I'll add it in.\n\n", 
-      "****\n", 
       "## Help Keep This Running\n",
       "These lists take time and money to put together. Not a lot, but a little.", 
       " If you enjoy them, maybe [toss me a buck](https://www.paypal.me/Zelbinian/1) now and then. 50% of after-expenses costs will be",
-      " forwarded along to the [Jack Vasel Memorial Fund.](http://www.jackvasel.org/),\n\n",
+      " forwarded along to the [Jack Vasel Memorial Fund](http://www.jackvasel.org/).\n\n",
       "[Signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via my referral link",
       " can help, too. Plus, it's swell!", 
       sep="")
