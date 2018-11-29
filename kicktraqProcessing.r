@@ -377,7 +377,7 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   # }
   
   # write the projects that end within the endInterval out to the file in Markdown formatm in chronological order
-  writePostTable(data = data %>% filter(`End Date` %within% endInterval, `Funding Percent` >= 35) %>% arrange(`End Date`), 
+  writePostTable(data = data %>% filter(`End Date` %within% endInterval, fundingPossible(`Funding Percent`, `End Date`)) %>% arrange(`End Date`), 
                  kicktraq = T)
   
   # grab more data as long as we don't have enough!
