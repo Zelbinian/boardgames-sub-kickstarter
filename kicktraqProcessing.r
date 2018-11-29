@@ -256,6 +256,8 @@ writePostTable <- function(data, kicktraq = F) {
     # posts a formatted version of the passed in data to the output file 
     cat("Project Info|Players|Backers|Min / Avg Pledge|Ends|Comments\n:--|:--|:--|:--|:--|:--\n")
   
+    checkmark <- intToUtf8("9745")
+  
     for(i in 1:nrow(data)) {
       curRecord <- data[i,]
         
@@ -264,7 +266,7 @@ writePostTable <- function(data, kicktraq = F) {
                             curRecord$Description,
                             " // *Has raised ",curRecord$`Current Funding`, " so far.",
                             ifelse(curRecord$Funded == TRUE, 
-                                   paste0("* **☑**"), # if funded, add a neat little checkmark
+                                   paste0("* **", checkmark, "**"), # if funded, add a neat little checkmark
                                    paste0(" (~", curRecord$`Funding Percent`, "%)*"))) # if not display percentage
       
       # comments are too complicated to attempt in-place in a cat statement, this will stitch together a comment string
@@ -391,22 +393,31 @@ createKsPost <- function(begDate = today()) {
   
   # write the post footer and then close the file stream
   cat("*****\n",
-      "Looking for more comprehensive Kickstarter gaming information? ",
-      "Check out [the meta listings on BGG](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist), ",
-      "explore [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/), or, ", 
+      "## Need moar Kickstarter goodness?\n",
+      "Check out... \n\n",
+      "- My [Calendar of Announced Kickstarters](https://airtable.com/shrioIkpOb33jjrcw)", 
+      " ([Also avail in iCal flavor](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en))\n",
+      "- My interactive Airtable view of [all active board game kickstarter campaigns](https://airtable.com/shrL0m86v0xDjRKbe).\n",
+      "- BoardGameGeek's variety of [Kickstarter-oriented Geeklists](https://boardgamegeek.com/geeklist/166152/kickstarter-project-metalist)\n",
+      "- [Kicktraq's data-driven views](https://www.kicktraq.com/categories/games/tabletop%20games/)\n", 
       "of course, [Kickstater's Tabletop Category](https://www.kickstarter.com/discover/categories/games/tabletop%20games?ref=category).\n\n",
-      "I also have a new [announced Kickstarter board game calendar](https://airtable.com/shrioIkpOb33jjrcw) which is usually up to date. (Usually.) ", 
-      "(Get it via [ical subscription](https://airtable.com/shrioIkpOb33jjrcw/iCal?timeZone=America%2FLos_Angeles&userLocale=en), if you prefer.)\n\n",
       "*****\n", 
       "## Footnotes\n", 
       "- `#hmm` means that something about the project seems a little off. Buyer beware kinda thing.\n", 
-      "- `#lolwut` is reserved for projects that seem like trainwrecks. Check 'em out for amusement.\n", 
+      "- `#lolwut` is reserved for projects that seem like copycat games or campaigns put together with little thought. Check 'em out for amusement.\n", 
       "- `#take` tags are for projects that have been restarted for some reason, with the number indicating what iteration we're currently on.\n",
-      "- `#New Ed` tags highlight a new edition of a previously-released game.",
-      "- Did I miss something? Particularly something **new in the last 7 days** or **ending in the next 7 days**? Let me know in the comments and I'll add it in.\n\n", 
+      "- `#newedition` tags highlight a new edition of a previously-released game.",
+      "- Did I miss something? Particularly something **new in the last 7 days** or **ending in the next 7 days**?", 
+      " Let me know in the comments and I'll add it in.\n\n", 
       "****\n", 
-      "[Tip Jar](https://www.paypal.me/Zelbinian/1) - Keep me in Kickstarter money.", sep="")
+      "## Help Keep This Running\n",
+      "These lists take time and money to put together. Not a lot, but a little.", 
+      " If you enjoy them, maybe [toss me a buck](https://www.paypal.me/Zelbinian/1) now and then. 50% of after-expenses costs will be",
+      " forwarded along to the [Jack Vasel Memorial Fund.](http://www.jackvasel.org/),\n\n",
+      "Alternatively, [signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via that referral link",
+      " can help, too. Plus, it's swell!", 
+      sep="")
   sink()
   
-  return(list("end" = endData, "new" = newData))
+  return(atData)
 }
