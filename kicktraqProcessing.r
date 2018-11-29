@@ -413,7 +413,8 @@ createKsPost <- function(data, begDate = today()) {
       " If you enjoy them, maybe [toss me a buck](https://www.paypal.me/Zelbinian/1) now and then. 50% of after-expenses costs will be",
       " forwarded along to the [Jack Vasel Memorial Fund](http://www.jackvasel.org/).\n\n",
       "[Signing up for a free AirTable account](https://airtable.com/invite/r/wJL1rj8U) via my referral link",
-      " can help, too. Plus, it's swell!", 
+      " can help, too. Plus, it's swell!\n",
+      "If you want a shoutout for your donation, put your reddit username in the notes.",
       sep="") %>% writeLines(outputFile, useBytes = T)
   
   return(data)
