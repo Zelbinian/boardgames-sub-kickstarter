@@ -329,7 +329,7 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   cat("## What this is:\n\n",
       "This is a weekly, curated listing of Kickstarter board game projects that are either:\n\n",
       "- **newly posted in the past 7 days**, or\n",
-      "- **ending in the next 7 days (starting tomorrow, ", strftime(begDate, format = "%b %d"), ")**",
+      "- **ending in the next 7 days (starting ", strftime(begDate + days(1), format = "%b %d"), ")**",
       " and have at least a fighting chance of being funded.\n\n",
       "All board game projects meeting those criteria will automatically be included, **no need to ask.** (The occasional non-board game project may also sneak in!)\n\n",
       "Expect new lists each Sunday sometime between midnight and noon PST.\n*****\n",
