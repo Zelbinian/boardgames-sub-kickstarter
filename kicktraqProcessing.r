@@ -416,7 +416,7 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
       sep="")
   sink()
   
-  return(atData)
+  return(data)
 }
 
 # gather the data
