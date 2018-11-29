@@ -251,6 +251,16 @@ hashtagify <- function(x) {
   return(x)
 }
 
+# we want to include a project if it has enough funding to possibly succeed, which depends
+# on how much time it has left to secure backers
+fundingPossible <- function(fundingAmount, endDate, startDate = today(), thMax = 70, perDayPenalty = 3.58) {
+
+  daysUntilEnd <- (startDate %--% endDate) / days()
+  threshold <- thMax - (daysUntilEnd * perDayPenalty)
+  
+  return (fundingAmount >= threshold) 
+}
+
 writePostTable <- function(data, kicktraq = F) {
     
     # posts a formatted version of the passed in data to the output file 
