@@ -367,7 +367,7 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
   # }
   
   # write the projects that end within the endInterval out to the file in Markdown formatm in chronological order
-  writePostTable(data = atData %>% filter(`End Date` %within% endInterval, `Funding Percent` >= 35) %>% arrange(`End Date`), 
+  writePostTable(data = data %>% filter(`End Date` %within% endInterval, `Funding Percent` >= 35) %>% arrange(`End Date`), 
                  kicktraq = T)
   
   # grab more data as long as we don't have enough!
@@ -385,7 +385,7 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
       "## New This Week\n", sep="")
     
   # write the projects that launched within the newInterval out to the file in Markdown format, in alphabetical order
-  writePostTable(data = atData %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name),
+  writePostTable(data = data %>% filter(`Launch Date` %within% newInterval) %>% arrange(Name),
                  kicktraq = F) 
   
   # write the post footer and then close the file stream
@@ -420,4 +420,4 @@ createKsPost <- function(data, begDate = today(), outputFile = "kspost.txt") {
 }
 
 # gather the data
-atData <- queryAirtable("Data Entry", ) %>% createKsPost()
+atData <- queryAirtable("Data Entry", "") %>% createKsPost()
