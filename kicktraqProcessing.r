@@ -274,10 +274,13 @@ writePostTable <- function(data, kicktraq = F) {
       # Project info is the most complicated column as it's calculated from many columns from the source data
       projectInfo <- paste0("**[",curRecord$Name,"](",curRecord$`Campaign Link`,")** ",
                             curRecord$Description,
-                            " // *Has raised ",curRecord$`Current Funding`, " so far.",
+                            " // *",
                             ifelse(curRecord$Funded == TRUE, 
-                                   paste0("* **", checkmark, "**"), # if funded, add a neat little checkmark
-                                   paste0(" (~", curRecord$`Funding Percent`, "%)*"))) # if not display percentage
+                                   # if funded, bold the funding info add a neat little checkmark
+                                   paste0("*Has raised ", curRecord$`Current Funding`, " so far. ", checkmark, "*"), 
+                                   # if not skip bolding and display percentage
+                                   paste0("Has raised ", curRecord$`Current Funding`, " so far. ", "(~", curRecord$`Funding Percent`, "%)")),
+                            "*") 
       
       # comments are too complicated to attempt in-place in a cat statement, this will stitch together a comment string
       # if certain conditions are met
@@ -424,5 +427,5 @@ createKsPost <- function(data, begDate = today()) {
 outputFile <- file("kspost.txt", open = "w+", encoding = "native.enc")
 
 # gather data , write out and close the connection
-tryCatch(atData <- queryAirtable("Data Entry", "") %>% createKsPost(),
+tryCatch(atData <- queryAirtable("Data Entry", "keyrdfVecWIde7Nlj") %>% createKsPost(),
          finally = close(outputFile))
