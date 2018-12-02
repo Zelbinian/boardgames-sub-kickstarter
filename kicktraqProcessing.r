@@ -14,152 +14,6 @@ library(tibble)
 library(stringr)
 library(dplyr)
 
-# sleeptime__ <- 5
-
-# -------- functions -------------------------
-# parseStartDate <- function(asIsDate) {
-#     startDate <- as.Date(parse_date_time(asIsDate, "bd"))
-#     curDate <- Sys.Date()
-#     
-#     if (month(startDate)==12 && month(curDate)==1) {
-#         year(startDate) <- year(curDate) - 1
-#     } else {
-#         year(startDate) <- year(curDate)
-#     }
-#     
-#     return(startDate)
-# }
-# 
-# parseEndDate <- function(asIsDate) {
-#     endDate <- str_match(asIsDate, "^[\\sa-zA-Z0-9]+")[1,] %>% parse_date_time("bd") %>% as.Date()
-#     curDate <- Sys.Date()
-#     
-#     if (month(endDate)==1 && month(curDate)==12) {
-#         year(endDate) <- year(curDate) + 1
-#     } else {
-#         year(endDate) <- year(curDate)
-#     }
-#     
-#     return(endDate)
-# }
-
-# This function makes use of grep to find data in the text blob
-
-# extractProjectInfo <- function(textblob, toExtract) {
-#     extracted <- grep(toExtract, textblob, fixed = TRUE, value = TRUE) %>%
-#         strsplit(":") %>% unlist() %>% .[2] %>% trimws()
-#     
-#     if (length(extracted) == 0) return(NA)
-#     else return(extracted)
-# }
-# 
-# scrapeProjectInfo <- function(ktURLs) {
-#   
-#   backers <- integer(0)
-#   fundingPct <- character(0)
-#   fundingAmt <- character(0)
-#   avgPledge <- character(0)
-#   startDates <- ymd()
-#   endDates <- ymd()
-#   ksURLs <- character(0)
-#   
-#   for(url in ktURLs) {
-#     
-#     ktResp <- RETRY(verb = "GET",
-#                     url = paste0("https://www.kicktraq.com",url),
-#                     body = FALSE,
-#                     times = 5) 
-#     
-#     # if we got a good response, keep going, otherwise harmlessly return the empty lists
-#     
-#     if (ktResp$status_code == 200) {
-#       
-#       projectPage <- content(ktResp)
-#       
-#       # first, grab the url for the actual Kickstarter project
-#       thisKsUrl <- projectPage %>% html_node("#button-backthis") %>% html_attr("href")
-#       
-#       # On occasion, the project page does disappear between grabbing the reference to
-#       # it on the project listing and trying to access it directly. It's bizarre.
-#       # When this happens, Kicktraq does not return a 404. Instead they generate
-#       # some dynamic placeholder page. These placeholder pages have none of the 
-#       # elements we're looking for, so the way we figure out if this happens is if
-#       # one of the attempts to grab them yeilds an empty list.
-#       if (length(thisKsUrl) > 0) {
-#         # yay! page exists! 
-#         logMessage("The page exists.")
-#         
-#         projectPageInfo <- projectPage %>%  
-#           html_node("#project-info-text") %>%   #selects the div with the project details in it
-#           html_text() %>%                     #pulling the text out
-#           strsplit('\n', fixed = TRUE) %>%                     #storing each peice of data separately
-#           unlist() %>%
-#           trimws()                            # Trimming white space to make life easier later
-#         
-#         # adding new data to the vectors
-#         backers <- c(backers, extractProjectInfo(projectPageInfo, "Backers:") %>% as.integer())
-#         fundingPct <- c(fundingPct, 
-#                         projectPage %>% html_node("#project-pledgilizer-top a") %>% html_attr("title"))
-#         fundingAmt <- c(fundingAmt, extractProjectInfo(projectPageInfo, "Funding:"))
-#         avgPledge <- c(avgPledge, extractProjectInfo(projectPageInfo, "Average Pledge Per Backer:"))
-#         
-#         # the dates are in a unique format so the processing here is a bit special and 
-#         # we need a helper variable and some helper functions
-#         datesStrs <- extractProjectInfo(projectPageInfo, "Dates:") %>% strsplit(" -> ") %>% unlist()
-#         startDates <- c(startDates, parseStartDate(datesStrs[1]))
-#         endDates <- c(endDates, parseEndDate(datesStrs[2]))
-#         ksURLs <- c(ksURLs, thisKsUrl)
-#         
-#         logMessage(paste("There are now",length(ksURLs),"items processed."))
-#       } 
-#     } else {
-#       message_for_status(ktResp, paste("retrieve",url,"from Kicktraq, processing skipped."))
-#     }
-#     
-#     Sys.sleep(sleeptime__) # try not to hammer their server
-#   }
-#   
-#   return(list("url"=ksURLs,"backers"=backers, "fundingAmt"=fundingAmt, "fundingPcnt"=fundingPct,
-#               "avgPledge"=avgPledge, "startDates"=startDates, "endDates"=endDates))
-# }
-# 
-# fetchProjectsData <- function(url, data) {
-#   ktResp <- RETRY(verb = "GET",
-#                    url = url,
-#                    body = FALSE,
-#                    times = 5)
-#   
-#   stop_for_status(x = ktResp,                       # If we don't get a 200, stop execution
-#                   task = paste("read",url))
-#   
-#   webdata <- content(ktResp)
-#   logMessage(paste(url,"has been read."))
-#   
-#   # # The project details, annoyingly, are just a text blob, so need to parse them out
-#   # prj_details <- webdata %>%                      #data source
-#   #     html_nodes(".project-details") %>%   #selects the div with the project details in it
-#   #     html_text() %>%                     #pulling the text out
-#   #     strsplit('\n')                      #storing each peice of data separately
-#   
-#   # this is the meaty function, the thing that actually processes the scraped data
-#   ktURLs <- webdata %>% html_nodes("h2 a") %>% html_attr("href")
-#   prj_info <- scrapeProjectInfo(ktURLs)
-#   
-#   add_row(data,
-#           "Title"=webdata %>% html_nodes("h2 a") %>% html_text(),
-#           "URL"=prj_info$url,
-#           "Description"=webdata %>% html_nodes(".project-infobox > div:nth-child(2)") %>% html_text() %>%
-#               gsub("[\r\n]", "", .),
-#           "Backers"=prj_info$backers,
-#           "Funding Amount"=prj_info$fundingAmt,
-#           "Funding Percent"=prj_info$fundingPcnt,
-#           "Average Pledge"=prj_info$avgPledge,
-#           "Project Start"=prj_info$startDates,
-#           "Project End"=prj_info$endDates,
-#           "Kicktraq URL"=ktURLs) %>% 
-#       return()
-# }
-
 queryAirtable <- function(viewChoice = "", apiKey) {
   
   # building a blank Tibble to add rows to later
@@ -321,10 +175,6 @@ writePostTable <- function(data, kicktraq = F) {
     
 }
 
-# logMessage <- function(message, logfile="kspostlog.txt") {
-#   paste(date(),">",message) %>% cat(file = logfile, sep = "\n", append = TRUE)
-# }
-
 # this function is effectively the script
 
 createKsPost <- function(data, begDate = today()) {
@@ -344,52 +194,10 @@ createKsPost <- function(data, begDate = today()) {
       "Expect new lists each Sunday sometime between midnight and noon PST.\n*****\n",
       "## Ending Soon", 
       sep="") %>% writeLines(outputFile, useBytes = T)
-    
-  # because we want to iteratively build a data frame, it's helpful to start with an
-  # empty shell version of it such that we can write one test that is guaranteed to
-  # fail the first time
-  # endData <- newData <- tibble("Title"=character(0),
-  #                                  "URL"=character(0),
-  #                                  "Description"=character(0),
-  #                                  "Backers"=numeric(0),
-  #                                  "Funding Amount"=character(0),
-  #                                  "Funding Percent"=character(0),
-  #                                  "Average Pledge"=character(0),
-  #                                  "Project Start"=ymd(0),
-  #                                  "Project End"=ymd(0),
-  #                                  "Kicktraq URL"=character(0))
-  
-  # put together the 'ending this week' data and dumping it to a file
-  
-  # page <- startPage
-  # 
-  # logMessage("Now processing projects ending soon")
-  # 
-  # # grab more data as long as we don't have enough!
-  # while(nrow(endData) == 0 || max(endData$`Project End`, na.rm = TRUE) <= begDate + days(endWindow)) {
-  #   logMessage(paste("Page", page, "of ending soon projects. Max date:",max(endData$`Project End`, na.rm = TRUE)))
-  #   currentUrl <- paste0(baseUrl, 'end', pageMod, page)
-  #   endData <- fetchProjectsData(currentUrl, endData)
-  #   page <- page + 1
-  #   
-  #   # throw in some wait time so we don't bludgeon their server
-  #   Sys.sleep(sleeptime__)
-  # }
   
   # write the projects that end within the endInterval out to the file in Markdown formatm in chronological order
   writePostTable(data = data %>% filter(`End Date` %within% endInterval, fundingPossible(`Funding Percent`, `End Date`)) %>% arrange(`End Date`), 
                  kicktraq = T)
-  
-  # grab more data as long as we don't have enough!
-  # while(nrow(newData) == 0 || min(newData$`Project Start`, na.rm = TRUE) >= begDate - days(newWindow)) {
-  #   logMessage(paste("Page", page, "of new projects. Min date:",min(newData$`Project Start`, na.rm = TRUE)))
-  #   currentUrl <- paste0(baseUrl, 'new', pageMod, page)
-  #   newData <- fetchProjectsData(currentUrl, newData)
-  #   page <- page + 1
-  #   
-  #   # throw in some wait time so we don't bludgeon their server
-  #   Sys.sleep(sleeptime__)
-  # }
 
   writeLines("## New This Week", outputFile, useBytes = T)
     
@@ -427,5 +235,5 @@ createKsPost <- function(data, begDate = today()) {
 outputFile <- file("kspost.txt", open = "w+", encoding = "native.enc")
 
 # gather data , write out and close the connection
-tryCatch(atData <- queryAirtable("Data Entry", "keyrdfVecWIde7Nlj") %>% createKsPost(),
+tryCatch(atData <- queryAirtable("Data Entry", "") %>% createKsPost(),
          finally = close(outputFile))
