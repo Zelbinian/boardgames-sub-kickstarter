@@ -131,9 +131,9 @@ writePostTable <- function(data, kicktraq = F) {
                             " // *",
                             ifelse(curRecord$Funded == TRUE, 
                                    # if funded, bold the funding info add a neat little checkmark
-                                   paste0("*Has raised ", curRecord$`Current Funding`, " so far. ", checkmark, "*"), 
+                                   paste0("*Has raised ", curRecord$`Current Funding`, " so far. (~", curRecord$`Funding Percent`, "%) ", checkmark, "*"), 
                                    # if not skip bolding and display percentage
-                                   paste0("Has raised ", curRecord$`Current Funding`, " so far. ", "(~", curRecord$`Funding Percent`, "%)")),
+                                   paste0("Has raised ", curRecord$`Current Funding`, " so far. (~", curRecord$`Funding Percent`, "%)")),
                             "*") 
       
       # comments are too complicated to attempt in-place in a cat statement, this will stitch together a comment string
